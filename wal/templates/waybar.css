@@ -1,0 +1,64 @@
+* {
+border: none;
+border-radius: 0;
+font-family: monospace;
+font-size: 12px;
+}
+
+window#waybar {
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid {color8}cc;
+}
+
+/* modules */
+#workspaces button,
+#clock,
+#cpu,
+#memory,
+#pulseaudio,
+#battery,
+#window {
+
+border: 0px solid {color8};
+
+color: {color7};
+
+padding: 8px 8px;
+}
+
+/* active workspace */
+#workspaces button.active {
+color: {color15};
+}
+
+/* hover */
+#workspaces button:hover {
+background: rgba({color0.rgb}, 0.5);
+}
+
+/* window title */
+#window {
+color: {color6};
+}
+
+#tray {
+border: 0px solid {color8};
+padding: 0 8px;
+}
+
+#tray > .passive {
+-gtk-icon-effect: dim;
+}
+
+#tray > .needs-attention {
+-gtk-icon-effect: highlight;
+}
+
+#custom-power {
+padding: 0 10px;
+color: {color7};
+}
+
+#custom-power:hover {
+background: rgba({color0.rgb}, 0.25);
+}

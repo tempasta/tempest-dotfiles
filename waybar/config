@@ -1,0 +1,64 @@
+{
+  "layer": "top",
+  "position": "top",
+  "height": 33,
+  "spacing": 0,
+
+  "margin-top": 20,
+  "margin-left": 20,
+  "margin-right": 20,
+  "margin-bottom": -10,
+
+  "modules-left": ["custom/power", "hyprland/workspaces", "hyprland/window"],
+  "modules-center": ["custom/clock"],
+  "modules-right": ["tray", "cpu", "memory", "pulseaudio", "battery"],
+
+  "custom/power": {
+    "format": "[  ]",
+    "tooltip": false,
+    "on-click": "~/.config/waybar/scripts/power.sh"
+  },
+
+  "hyprland/window": {
+    "format": "[ {} ]"
+  },
+
+  "custom/clock": {
+    "exec": "date '+[ %I:%M:%S %p ]' | tr 'A-Z' 'a-z'",
+    "interval": 1
+  },
+
+  "cpu": {
+    "format": "[ 󰻠 {usage}% ]",
+    "interval": 2,
+    "on-click": "kitty -e btop"
+  },
+
+  "memory": {
+    "format": "[ 󰍛 {percentage}% ]",
+    "interval": 5,
+    "on-click": "kitty -e btop"
+  },
+
+  "pulseaudio": {
+    "format": "[ {icon} {volume}% ]",
+    "format-muted": "[ 󰝟 muted ]",
+    "format-icons": {
+      "default": ["󰕿", "󰖀", "󰕾"]
+    },
+
+    "on-click": "kitty -e ~/.local/bin/pulsemixer",
+    "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+    "on-scroll-up": "wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 5%+",
+    "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
+  },
+
+  "tray": {
+    "spacing": 8
+  },
+
+  "hyprland/workspaces": {
+    "format": "[ {name} ]",
+    "all-outputs": true
+  }
+}
