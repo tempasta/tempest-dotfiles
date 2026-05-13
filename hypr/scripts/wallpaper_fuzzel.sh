@@ -216,8 +216,8 @@ cat > ~/.config/swaync/style.css <<EOF
 }
 
 .floating-notifications {
-    margin: 18px;
-    margin-top: 24px;
+    margin: 16px;
+    margin-top: 23px;
 }
 
 .body {
