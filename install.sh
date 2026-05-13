@@ -1,5 +1,6 @@
 #!/bin/bash
-set -e
+
+set -euo pipefail
 
 echo "=== Dotfiles installer starting ==="
 
@@ -7,31 +8,51 @@ sudo -v
 
 DOTFILES="$HOME/dotfiles"
 REPO="https://github.com/tempasta/tempest-dotfiles.git"
+CONFIG_DIR="$HOME/.config"
+BACKUP_DIR="$HOME/.config-backup"
+WALLPAPER_DEST="$HOME/Pictures/wallpapers"
 
-echo "Installing packages..."
+echo "Installing repos..."
 
 sudo dnf copr enable -y solopasha/hyprland || true
 
-sudo dnf install -y \
-    git \
-    hyprland \
-    waybar \
-    fuzzel \
-    kitty \
-    swaync \
-    fastfetch \
-    wofi \
-    rofi \
-    flameshot \
-    wl-clipboard \
-    xdg-desktop-portal-hyprland \
-    polkit-gnome \
-    grim \
-    slurp \
-    swappy \
-    brightnessctl \
-    pavucontrol \
+echo "Installing packages..."
+
+PACKAGES=(
+    git
+    hyprland
+    hyprpaper
+    waybar
+    fuzzel
+    kitty
+    swaync
+    fastfetch
+    flameshot
+    wl-clipboard
+    xdg-desktop-portal-hyprland
+    polkit-gnome
+    grim
+    slurp
+    swappy
+    brightnessctl
+    pavucontrol
     wireplumber
+)
+
+for pkg in "${PACKAGES[@]}"; do
+    echo "Installing: $pkg"
+
+    if rpm -q "$pkg" >/dev/null 2>&1; then
+        echo "  -> already installed"
+        continue
+    fi
+
+    sudo dnf install -y "$pkg" || {
+        echo "  -> failed to install $pkg (continuing)"
+    }
+done
+
+echo "Fetching dotfiles..."
 
 if [ -d "$DOTFILES/.git" ]; then
     echo "Updating dotfiles..."
@@ -43,32 +64,70 @@ fi
 
 cd "$DOTFILES"
 
-echo "Backing up configs..."
-mkdir -p "$HOME/.config-backup"
+echo "Creating backup folder..."
+mkdir -p "$BACKUP_DIR"
 
-backup() {
-    [ -e "$HOME/.config/$1" ] && mv "$HOME/.config/$1" "$HOME/.config-backup/"
+backup_config() {
+    local name="$1"
+
+    if [ -e "$CONFIG_DIR/$name" ]; then
+        echo "Backing up $name"
+        rm -rf "$BACKUP_DIR/$name.old" 2>/dev/null || true
+        mv "$CONFIG_DIR/$name" "$BACKUP_DIR/$name"
+    fi
 }
 
-backup hypr
-backup waybar
+copy_config() {
+    local name="$1"
 
-link() {
-    src="$DOTFILES/$1"
-    dest="$HOME/.config/$1"
+    local src="$DOTFILES/$name"
+    local dest="$CONFIG_DIR/$name"
 
-    [ -e "$dest" ] && mv "$dest" "$dest.bak"
-    ln -s "$src" "$dest"
-    echo "linked $1"
+    if [ ! -d "$src" ]; then
+        echo "Skipping missing config: $name"
+        return
+    fi
+
+    backup_config "$name"
+
+    echo "Copying $name..."
+    cp -r "$src" "$dest"
 }
 
-link hypr
-link waybar
-link fuzzel
-link kitty
-link swaync
-link wofi
-link rofi
+echo "Installing configs..."
 
-echo "=== Done ==="
-echo "Log out and select Hyprland session."
+mkdir -p "$CONFIG_DIR"
+
+copy_config hypr
+copy_config waybar
+copy_config fuzzel
+copy_config kitty
+copy_config swaync
+copy_config fastfetch
+
+echo "Installing wallpapers..."
+
+mkdir -p "$WALLPAPER_DEST"
+
+if [ -d "$DOTFILES/wallpapers" ]; then
+    cp -rf "$DOTFILES/wallpapers/"* "$WALLPAPER_DEST/"
+    echo "Wallpapers copied to $WALLPAPER_DEST"
+else
+    echo "No wallpapers folder found in repo."
+fi
+
+echo "Making scripts executable..."
+
+chmod +x "$CONFIG_DIR/hypr/scripts/"*.sh 2>/dev/null || true
+
+echo "Running initial wallpaper/theme setup..."
+
+if [ -f "$CONFIG_DIR/hypr/scripts/wallpaper_fuzzel.sh" ]; then
+    bash "$CONFIG_DIR/hypr/scripts/wallpaper_fuzzel.sh" || true
+else
+    echo "wallpaper_fuzzel.sh not found"
+fi
+
+echo ""
+echo "=== INSTALL COMPLETE ==="
+echo "Log out and select the Hyprland session."
