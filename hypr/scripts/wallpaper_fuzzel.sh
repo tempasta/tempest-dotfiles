@@ -36,6 +36,12 @@ EOF
 mkdir -p "$THEME_DIR"
 wal -i "$FILE" || { echo "pywal failed"; exit 1; }
 
+mkdir -p ~/.config/waybar
+
+if [ -f ~/.cache/wal/theme.css ]; then
+    cp ~/.cache/wal/theme.css ~/.config/waybar/theme.css
+fi
+
 source ~/.cache/wal/colors.sh
 
 # ---------------- derived colors ----------------
