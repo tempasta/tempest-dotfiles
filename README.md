@@ -21,6 +21,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/tempasta/tempest-dotfiles/ma
 ```
 
 ## keybinds
+these aren't all the keybinds just the useful ones
 | keybind | action |
 |----------|--------|
 | `SUPER + T` | open terminal (kitty) |
@@ -33,7 +34,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/tempasta/tempest-dotfiles/ma
 | `SUPER + L` | lock screen (hyprlock) |
 | `SUPER + 1-0` | switch workspace |
 | `SUPER + SHIFT + 1-0` | move window to workspace |
-| `Print` | screenshot (flameshot) |
+| `Print` or `Ctrl + Print` | screenshot (flameshot) |
 
 ## notes
 - designed for nobara/fedora
@@ -45,7 +46,8 @@ bash <(curl -fsSL https://raw.githubusercontent.com/tempasta/tempest-dotfiles/ma
 
 ## preview
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/23a7f6bb-e12a-4db1-ba10-d09abbdf050e" width="500">
+  <img src="https://github.com/user-attachments/assets/23a7f6bb-e12a-4db1-ba10-d09abbdf050e">
+  <img src="https://github.com/user-attachments/assets/bf5cfdb2-cd37-4d41-955c-fe064e2a9df5">
 </p>
 
 <p align="center">
