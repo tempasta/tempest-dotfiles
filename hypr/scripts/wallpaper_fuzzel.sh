@@ -5,6 +5,28 @@ HYPRPAPER_CONF="$HOME/.config/hypr/hyprpaper.conf"
 HYPR_CONF="$HOME/.config/hypr/hyprland.conf"
 THEME_DIR="$HOME/.cache/wal"
 
+get_monitors() {
+    local mons=()
+
+    if command -v wlr-randr >/dev/null 2>&1; then
+        while IFS= read -r line; do
+            if [[ "$line" =~ ^([A-Za-z0-9_-]+)[[:space:]]\" ]]; then
+                mons+=("${BASH_REMATCH[1]}")
+            fi
+        done < <(wlr-randr 2>/dev/null)
+    fi
+
+    if [[ ${#mons[@]} -eq 0 ]] && [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] && command -v hyprctl >/dev/null 2>&1; then
+        while IFS= read -r line; do
+            if [[ "$line" =~ ^Monitor[[:space:]]+([A-Za-z0-9_-]+) ]]; then
+                mons+=("${BASH_REMATCH[1]}")
+            fi
+        done < <(hyprctl monitors 2>/dev/null)
+    fi
+
+    printf '%s\n' "${mons[@]}"
+}
+
 # ---------------- fuzzel picker ----------------
 FILE=$(find "$WALLPAPER_DIR" -type f \
     | sort \
@@ -19,17 +41,29 @@ FILE="$WALLPAPER_DIR/$FILE"
 
 echo "applying: $FILE"
 # ---------------- wallpaper ----------------
-MONITORS=$(hyprctl monitors | awk '/Monitor/ {print $2}')
+mapfile -t MONITORS < <(get_monitors)
 
-cat > "$HYPRPAPER_CONF" <<EOF
+if [[ ${#MONITORS[@]} -eq 0 ]]; then
+    echo "no monitors found"
+    exit 1
+fi
+
+mkdir -p "$(dirname "$HYPRPAPER_CONF")"
+
+{
+    for mon in "${MONITORS[@]}"; do
+        cat <<EOF
 wallpaper {
-    monitor = $MONITORS
+    monitor = $mon
     path = $FILE
     fit_mode = cover
 }
-splash = false
-ipc = off
+
 EOF
+    done
+    echo "splash = false"
+    echo "ipc = off"
+} > "$HYPRPAPER_CONF"
 
 # ---------------- pywal ----------------
 mkdir -p "$THEME_DIR"
@@ -64,8 +98,8 @@ awk -v active="col.active_border = 0xff$hex" \
     -v inactive="col.inactive_border = 0xff$hex" '
 /^general {/ {
     print
-    print "    " inactive
-    print "    " active
+    print "  " inactive
+    print "  " active
     next
 }
 {print}
