@@ -256,248 +256,143 @@ declare -A MON_COL=()
 declare -A MON_X=()
 declare -A MON_Y=()
 
-show_position_layout() {
-    printf "  ${DIM}pick a position:${RESET}\n"
-    printf "  ${BOLD}[   top-left  ]${RESET}   ${BOLD}[  top   ]${RESET}   ${BOLD}[   top-right  ]${RESET}\n"
-    printf "  ${BOLD}[    left     ]${RESET}   ${BOLD}[ middle ]${RESET}   ${BOLD}[    right     ]${RESET}\n"
-    printf "  ${BOLD}[ bottom-left ]${RESET}   ${BOLD}[ bottom ]${RESET}   ${BOLD}[ bottom-right ]${RESET}\n"
-    printf "\n"
-}
+detect_backend() {
+    # Hyprland (best case)
+    if [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] && command -v hyprctl >/dev/null 2>&1; then
+        if hyprctl monitors >/dev/null 2>&1; then
+            echo "hyprctl"
+            return 0
+        fi
+    fi
 
-set_monitor_position() {
-    local mon="$1"
-    local pos="$2"
+    # wlroots (ONLY if it actually runs cleanly)
+    if command -v wlr-randr >/dev/null 2>&1; then
+        if wlr-randr 2>/dev/null | grep -q "Monitor"; then
+            echo "wlr-randr"
+            return 0
+        fi
+    fi
 
-    case "$pos" in
-        left)         MON_ROW["$mon"]="middle"; MON_COL["$mon"]="left" ;;
-        middle)       MON_ROW["$mon"]="middle"; MON_COL["$mon"]="middle" ;;
-        right)        MON_ROW["$mon"]="middle"; MON_COL["$mon"]="right" ;;
-        top)          MON_ROW["$mon"]="top";    MON_COL["$mon"]="middle" ;;
-        bottom)       MON_ROW["$mon"]="bottom"; MON_COL["$mon"]="middle" ;;
-        top-left)     MON_ROW["$mon"]="top";    MON_COL["$mon"]="left" ;;
-        top-right)    MON_ROW["$mon"]="top";    MON_COL["$mon"]="right" ;;
-        bottom-left)  MON_ROW["$mon"]="bottom"; MON_COL["$mon"]="left" ;;
-        bottom-right) MON_ROW["$mon"]="bottom"; MON_COL["$mon"]="right" ;;
-    esac
-}
-
-pretty_model() {
-    local raw="$1"
-
-    raw="${raw%%, *}"
-
-    case "$raw" in
-        *" Inc. "*)         raw="${raw#*Inc. }" ;;
-        *" Corporation "*)  raw="${raw#*Corporation }" ;;
-        *" Co., Ltd. "*)    raw="${raw#*Co., Ltd. }" ;;
-        *" Technologies "*) raw="${raw#*Technologies }" ;;
-    esac
-
-    printf '%s' "${raw:-Unknown display}"
-}
-
-show_monitor_labels() {
-    if ! command -v hyprctl &>/dev/null || ! command -v zenity &>/dev/null; then
+    # KDE
+    if command -v kscreen-doctor >/dev/null 2>&1; then
+        echo "kscreen-doctor"
         return 0
     fi
 
-    [[ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] && return 0
+    # X11
+    if command -v xrandr >/dev/null 2>&1; then
+        echo "xrandr"
+        return 0
+    fi
 
-    log info "showing temporary monitor labels"
-    echo
-
-    for m in "${MON_LIST[@]}"; do
-        local label="THIS IS ${m} (${MON_MODEL[$m]})"
-
-        hyprctl dispatch focusmonitor "$m" >/dev/null 2>&1 || true
-
-        zenity --info \
-            --no-wrap \
-            --title="Monitor identifier" \
-            --text="$label" \
-            --timeout=3 \
-            >/dev/null 2>&1 &
-
-        sleep 0.15
-    done
-}
-
-print_monitor_context() {
-    local m="$1"
-
-    printf "\n"
-    printf "  ${BOLD}[editing monitor:${RESET} ${CYAN}%s${RESET} ${DIM}(%s)]${RESET}\n" \
-        "$m" "${MON_MODEL[$m]}"
+    return 1
 }
 
 detect_monitors() {
-    local current_mon=""
-    local backend=""
-
     MON_LIST=()
 
-    # ── Hyprland ─────────────────────────────────────
-    if [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] && command -v hyprctl >/dev/null 2>&1; then
-        backend="hyprctl"
-
-        current_mon=""
-
-        while IFS= read -r line; do
-            # Example:
-            # Monitor HDMI-A-2 (ID 0):
-            if [[ "$line" =~ ^Monitor[[:space:]]+([A-Za-z0-9._-]+) ]]; then
-                current_mon="${BASH_REMATCH[1]}"
-
-                MON_LIST+=("$current_mon")
-                MON_MODEL["$current_mon"]="$current_mon"
-                MON_MODES["$current_mon"]=""
-
-                continue
-            fi
-
-            [[ -z "$current_mon" ]] && continue
-
-            # Example:
-            # availableModes: 1920x1080@60.00Hz 1920x1080@74.97Hz
-            if [[ "$line" =~ availableModes: ]]; then
-                modes_raw="${line#*availableModes: }"
-
-                for mode in $modes_raw; do
-                    if [[ "$mode" =~ ^([0-9]+)x([0-9]+)@([0-9]+(\.[0-9]+)?)Hz$ ]]; then
-                        formatted="${BASH_REMATCH[1]}x${BASH_REMATCH[2]} @ ${BASH_REMATCH[3]}Hz"
-                        MON_MODES["$current_mon"]+="$formatted"$'\n'
-                    fi
-                done
-            fi
-
-            # Example:
-            # 1920x1080@74.97300 at 0x0
-            if [[ "$line" =~ ^([0-9]+)x([0-9]+)@([0-9]+(\.[0-9]+)?) ]]; then
-                current_mode="${BASH_REMATCH[1]}x${BASH_REMATCH[2]} @ ${BASH_REMATCH[3]}Hz"
-
-                # Put active mode first
-                if [[ -n "${MON_MODES[$current_mon]}" ]]; then
-                    MON_MODES["$current_mon"]="$current_mode"$'\n'"${MON_MODES[$current_mon]}"
-                else
-                    MON_MODES["$current_mon"]="$current_mode"$'\n'
-                fi
-            fi
-        done < <(hyprctl monitors all)
-
-    # ── wlroots ──────────────────────────────────────
-    elif command -v wlr-randr >/dev/null 2>&1; then
-        backend="wlr-randr"
-
-        while IFS= read -r line; do
-            if [[ "$line" =~ ^([A-Za-z0-9._-]+)[[:space:]]\"([^\"]+)\" ]]; then
-                current_mon="${BASH_REMATCH[1]}"
-
-                MON_LIST+=("$current_mon")
-                MON_MODEL["$current_mon"]="$(pretty_model "${BASH_REMATCH[2]}")"
-                MON_MODES["$current_mon"]=""
-
-                continue
-            fi
-
-            if [[ -n "$current_mon" && "$line" =~ ^[[:space:]]*([0-9]+)x([0-9]+)[[:space:]]px,[[:space:]]+([0-9]+(\.[0-9]+)?) ]]; then
-                mode="${BASH_REMATCH[1]}x${BASH_REMATCH[2]} @ ${BASH_REMATCH[3]}Hz"
-                MON_MODES["$current_mon"]+="$mode"$'\n'
-            fi
-        done < <(wlr-randr 2>/dev/null)
-
-    # ── KDE Plasma ───────────────────────────────────
-    elif command -v kscreen-doctor >/dev/null 2>&1; then
-        backend="kscreen-doctor"
-
-        while IFS= read -r line; do
-            if [[ "$line" =~ Output:[[:space:]]+[0-9]+[[:space:]]+([A-Za-z0-9._-]+) ]]; then
-                mon="${BASH_REMATCH[1]}"
-
-                MON_LIST+=("$mon")
-                MON_MODEL["$mon"]="$mon"
-                MON_MODES["$mon"]="1920x1080 @ 60Hz"
-            fi
-        done < <(kscreen-doctor -o)
-
-    # ── X11 ──────────────────────────────────────────
-    elif command -v xrandr >/dev/null 2>&1; then
-        backend="xrandr"
-
-        while IFS= read -r line; do
-            if [[ "$line" =~ ^([A-Za-z0-9._-]+)[[:space:]]connected ]]; then
-                mon="${BASH_REMATCH[1]}"
-
-                MON_LIST+=("$mon")
-                MON_MODEL["$mon"]="$mon"
-                MON_MODES["$mon"]=""
-
-                while IFS= read -r mode; do
-                    MON_MODES["$mon"]+="$mode"$'\n'
-                done < <(
-                    xrandr |
-                    awk -v m="$mon" '
-                        $1==m {found=1; next}
-                        found && /^[[:space:]]+[0-9]/ {
-                            gsub(/^[ \t]+/, "")
-                            split($1,a,"x")
-                            print a[1]"x"a[2]" @ "$2"Hz"
-                        }
-                        found && /^[A-Za-z]/ {exit}
-                    '
-                )
-            fi
-        done < <(xrandr --query)
-
-    else
-        return 1
-    fi
+    backend="$(detect_backend || true)"
+    [[ -z "$backend" ]] && return 1
 
     log info "monitor backend: $backend"
+
+    case "$backend" in
+        hyprctl)
+            while IFS= read -r line; do
+                if [[ "$line" =~ ^Monitor[[:space:]]+([A-Za-z0-9._-]+) ]]; then
+                    mon="${BASH_REMATCH[1]}"
+                    MON_LIST+=("$mon")
+                    MON_MODEL["$mon"]="$mon"
+                    MON_MODES["$mon"]=""
+                fi
+
+                if [[ "$line" =~ ([0-9]+)x([0-9]+)@([0-9.]+) ]]; then
+                    mode="${BASH_REMATCH[1]}x${BASH_REMATCH[2]} @ ${BASH_REMATCH[3]}Hz"
+                    MON_MODES["$mon"]="$mode"$'\n'"${MON_MODES[$mon]}"
+                fi
+            done < <(hyprctl monitors all 2>/dev/null)
+            ;;
+
+        wlr-randr)
+            while IFS= read -r line; do
+                if [[ "$line" =~ ^([A-Za-z0-9._-]+)[[:space:]]\"([^\"]+)\" ]]; then
+                    mon="${BASH_REMATCH[1]}"
+                    MON_LIST+=("$mon")
+                    MON_MODEL["$mon"]="$(pretty_model "${BASH_REMATCH[2]}")"
+                    MON_MODES["$mon"]=""
+                fi
+
+                if [[ "$line" =~ ([0-9]+)x([0-9]+)[[:space:]]px,[[:space:]]+([0-9.]+) ]]; then
+                    mode="${BASH_REMATCH[1]}x${BASH_REMATCH[2]} @ ${BASH_REMATCH[3]}Hz"
+                    MON_MODES["$mon"]+="$mode"$'\n'
+                fi
+            done < <(wlr-randr 2>/dev/null)
+            ;;
+
+        kscreen-doctor)
+            while IFS= read -r line; do
+                if [[ "$line" =~ Output:[[:space:]]+[0-9]+[[:space:]]+([A-Za-z0-9._-]+) ]]; then
+                    mon="${BASH_REMATCH[1]}"
+                    MON_LIST+=("$mon")
+                    MON_MODEL["$mon"]="$mon"
+                    MON_MODES["$mon"]="1920x1080 @ 60Hz"
+                fi
+            done < <(kscreen-doctor -o)
+            ;;
+
+        xrandr)
+            while IFS= read -r line; do
+                if [[ "$line" =~ ^([A-Za-z0-9._-]+)[[:space:]]connected ]]; then
+                    mon="${BASH_REMATCH[1]}"
+                    MON_LIST+=("$mon")
+                    MON_MODEL["$mon"]="$mon"
+                    MON_MODES["$mon"]=""
+                fi
+            done < <(xrandr --query)
+            ;;
+    esac
+
+    [[ ${#MON_LIST[@]} -eq 0 ]] && return 1
     return 0
 }
 
 if ! detect_monitors; then
-    log warn "could not detect monitors"
+    log warn "no monitors detected"
 else
-    log ok "found ${#MON_LIST[@]} connected monitor(s)"
+    log ok "found ${#MON_LIST[@]} monitor(s)"
 
     show_monitor_labels
 
     for m in "${MON_LIST[@]}"; do
-        local_label="${m} (${MON_MODEL[$m]})"
-        printf "  ${BOLD}%s${RESET}\n" "$local_label"
+        printf "  ${BOLD}%s${RESET}\n" "$m"
 
         mapfile -t modes < <(printf '%s' "${MON_MODES[$m]}" | sed '/^$/d')
 
         if [[ ${#modes[@]} -eq 0 ]]; then
-            log warn "no modes detected for $m, using 1920x1080 @ 60Hz"
             MON_SEL_W["$m"]=1920
             MON_SEL_H["$m"]=1080
             MON_SEL_R["$m"]=60
         else
             for i in "${!modes[@]}"; do
-                printf "    ${DIM}%2d) %s${RESET}\n" "$((i + 1))" "${modes[$i]}"
+                printf "    %2d) %s\n" "$((i+1))" "${modes[$i]}"
             done
 
             while true; do
                 print_monitor_context "$m"
-                printf "  ${CYAN}➜${RESET} ${BOLD}resolution & refresh rate [1, 2, 3, ...]${RESET}: "
+                printf "  ➜ resolution [1-%d]: " "${#modes[@]}"
+                read -r choice
+                choice="${choice:-1}"
 
-                read -r mode_choice
-                mode_choice="${mode_choice:-1}"
+                if [[ "$choice" =~ ^[0-9]+$ ]] && ((choice>=1 && choice<=${#modes[@]})); then
+                    sel="${modes[$((choice-1))]}"
 
-                if [[ "$mode_choice" =~ ^[0-9]+$ ]] && (( mode_choice >= 1 && mode_choice <= ${#modes[@]} )); then
-                    selected_mode="${modes[$((mode_choice - 1))]}"
-
-                    if [[ "$selected_mode" =~ ^([0-9]+)x([0-9]+)[[:space:]]@\ ([0-9]+(\.[0-9]+)?)Hz$ ]]; then
+                    if [[ "$sel" =~ ([0-9]+)x([0-9]+)[[:space:]]@([0-9.]+) ]]; then
                         MON_SEL_W["$m"]="${BASH_REMATCH[1]}"
                         MON_SEL_H["$m"]="${BASH_REMATCH[2]}"
                         MON_SEL_R["$m"]="${BASH_REMATCH[3]}"
                     fi
                     break
                 fi
-
-                log warn "invalid choice, try again"
             done
         fi
 
@@ -505,7 +400,7 @@ else
         show_position_layout
 
         while true; do
-            printf "  ${CYAN}➜${RESET} ${BOLD}position${RESET}: "
+            printf "  ➜ position: "
             read -r pos
             pos="${pos:-middle}"
 
@@ -523,38 +418,28 @@ else
         echo
     done
 
-    top_h=0
-    mid_h=0
-    bot_h=0
+    # layout calc (unchanged)
+    top_h=0; mid_h=0; bot_h=0
 
     for m in "${MON_LIST[@]}"; do
         case "${MON_ROW[$m]}" in
-            top)
-                (( MON_SEL_H[$m] > top_h )) && top_h="${MON_SEL_H[$m]}"
-                ;;
-            middle)
-                (( MON_SEL_H[$m] > mid_h )) && mid_h="${MON_SEL_H[$m]}"
-                ;;
-            bottom)
-                (( MON_SEL_H[$m] > bot_h )) && bot_h="${MON_SEL_H[$m]}"
-                ;;
+            top) (( MON_SEL_H[$m] > top_h )) && top_h="${MON_SEL_H[$m]}" ;;
+            middle) (( MON_SEL_H[$m] > mid_h )) && mid_h="${MON_SEL_H[$m]}" ;;
+            bottom) (( MON_SEL_H[$m] > bot_h )) && bot_h="${MON_SEL_H[$m]}" ;;
         esac
     done
 
     for row in top middle bottom; do
         x=0
-
         for col in left middle right; do
             for m in "${MON_LIST[@]}"; do
                 if [[ "${MON_ROW[$m]}" == "$row" && "${MON_COL[$m]}" == "$col" ]]; then
                     MON_X["$m"]="$x"
-
                     case "$row" in
                         top) MON_Y["$m"]=0 ;;
                         middle) MON_Y["$m"]="$top_h" ;;
                         bottom) MON_Y["$m"]=$((top_h + mid_h)) ;;
                     esac
-
                     x=$((x + MON_SEL_W[$m]))
                 fi
             done
@@ -562,18 +447,14 @@ else
     done
 
     MONITOR_FILE="$CONFIG_DIR/hypr/monitors.conf"
-
     mkdir -p "$CONFIG_DIR/hypr"
     : > "$MONITOR_FILE"
 
     for m in "${MON_LIST[@]}"; do
         printf "monitor = %s, %sx%s@%s, %sx%s, 1\n" \
             "$m" \
-            "${MON_SEL_W[$m]}" \
-            "${MON_SEL_H[$m]}" \
-            "${MON_SEL_R[$m]}" \
-            "${MON_X[$m]:-0}" \
-            "${MON_Y[$m]:-0}" >> "$MONITOR_FILE"
+            "${MON_SEL_W[$m]}" "${MON_SEL_H[$m]}" "${MON_SEL_R[$m]}" \
+            "${MON_X[$m]:-0}" "${MON_Y[$m]:-0}" >> "$MONITOR_FILE"
     done
 
     log ok "monitors.conf written"
