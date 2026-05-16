@@ -19,7 +19,6 @@
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/tempasta/tempest-dotfiles/main/install.sh)
 ```
-> the installer isnt perfect you WILL run into issues sorry not sorry
 
 ## keybinds
 | keybind | action |
