@@ -2,7 +2,11 @@
 
 set -euo pipefail
 
-echo "=== Dotfiles installer starting ==="
+log() {
+    echo "[$1] ${2,,}"
+}
+
+log init "dotfiles installer starting"
 
 sudo -v
 
@@ -12,11 +16,11 @@ CONFIG_DIR="$HOME/.config"
 BACKUP_DIR="$HOME/.config-backup"
 WALLPAPER_DEST="$HOME/Pictures/wallpapers"
 
-echo "Installing repos..."
+log repos "installing copr repos"
 
 sudo dnf copr enable -y solopasha/hyprland || true
 
-echo "Installing packages..."
+log packages "installing packages"
 
 PACKAGES=(
     git
@@ -40,38 +44,39 @@ PACKAGES=(
 )
 
 for pkg in "${PACKAGES[@]}"; do
-    echo "Installing: $pkg"
+    log package "installing $pkg"
 
     if rpm -q "$pkg" >/dev/null 2>&1; then
-        echo "  -> already installed"
+        log package "$pkg already installed"
         continue
     fi
 
     sudo dnf install -y "$pkg" || {
-        echo "  -> failed to install $pkg (continuing)"
+        log warning "failed to install $pkg, continuing"
     }
 done
 
-echo "Fetching dotfiles..."
+log git "fetching dotfiles"
 
 if [ -d "$DOTFILES/.git" ]; then
-    echo "Updating dotfiles..."
+    log git "updating dotfiles"
     git -C "$DOTFILES" pull
 else
-    echo "Cloning dotfiles..."
+    log git "cloning dotfiles"
     git clone "$REPO" "$DOTFILES"
 fi
 
 cd "$DOTFILES"
 
-echo "Creating backup folder..."
+log backup "creating backup folder"
 mkdir -p "$BACKUP_DIR"
 
 backup_config() {
     local name="$1"
 
     if [ -e "$CONFIG_DIR/$name" ]; then
-        echo "Backing up $name"
+        log backup "backing up $name"
+
         rm -rf "$BACKUP_DIR/$name.old" 2>/dev/null || true
         mv "$CONFIG_DIR/$name" "$BACKUP_DIR/$name"
     fi
@@ -84,17 +89,17 @@ copy_config() {
     local dest="$CONFIG_DIR/$name"
 
     if [ ! -d "$src" ]; then
-        echo "Skipping missing config: $name"
+        log skip "missing config $name"
         return
     fi
 
     backup_config "$name"
 
-    echo "Copying $name..."
+    log config "copying $name"
     cp -r "$src" "$dest"
 }
 
-echo "Installing configs..."
+log config "installing configs"
 
 mkdir -p "$CONFIG_DIR"
 
@@ -105,29 +110,61 @@ copy_config kitty
 copy_config swaync
 copy_config fastfetch
 
-echo "Installing wallpapers..."
+log wallpapers "installing wallpapers"
 
 mkdir -p "$WALLPAPER_DEST"
 
 if [ -d "$DOTFILES/wallpapers" ]; then
     cp -rf "$DOTFILES/wallpapers/"* "$WALLPAPER_DEST/"
-    echo "Wallpapers copied to $WALLPAPER_DEST"
+    log wallpapers "copied wallpapers"
 else
-    echo "No wallpapers folder found in repo."
+    log warning "wallpapers folder missing"
 fi
 
-echo "Making scripts executable..."
+log theme "installing cursor and gtk theme"
 
+mkdir -p "$HOME/.local/share/icons"
+mkdir -p "$HOME/.themes"
+
+if [ -d "$DOTFILES/Empty-Pixel-White" ]; then
+    log cursor "installing empty-pixel-white"
+
+    rm -rf "$HOME/.local/share/icons/Empty-Pixel-White"
+
+    cp -r "$DOTFILES/Empty-Pixel-White" \
+        "$HOME/.local/share/icons/"
+else
+    log warning "empty-pixel-white missing"
+fi
+
+if [ -d "$DOTFILES/Adwaita-dark" ]; then
+    log gtk "installing adwaita-dark"
+
+    rm -rf "$HOME/.themes/Adwaita-dark"
+
+    cp -r "$DOTFILES/Adwaita-dark" \
+        "$HOME/.themes/"
+else
+    log warning "adwaita-dark missing"
+fi
+
+log gtk "applying gtk settings"
+
+gsettings set org.gnome.desktop.interface gtk-theme "Adwaita-dark" || true
+gsettings set org.gnome.desktop.interface color-scheme "prefer-dark" || true
+gsettings set org.gnome.desktop.interface cursor-theme "Empty-Pixel-White" || true
+
+log scripts "making scripts executable"
 chmod +x "$CONFIG_DIR/hypr/scripts/"*.sh 2>/dev/null || true
 
-echo "Running initial wallpaper/theme setup..."
+log wallpaper "running wallpaper setup"
+log wallpaper "please choose your initial wallpaper. you can always change this later with the keybind [SUPER + W] when in hyprland"
 
 if [ -f "$CONFIG_DIR/hypr/scripts/wallpaper_fuzzel.sh" ]; then
     bash "$CONFIG_DIR/hypr/scripts/wallpaper_fuzzel.sh" || true
 else
-    echo "wallpaper_fuzzel.sh not found"
+    log warning "wallpaper_fuzzel.sh not found"
 fi
 
-echo ""
-echo "=== INSTALL COMPLETE ==="
-echo "Log out and select the Hyprland session."
+echo
+log done "install complete"
