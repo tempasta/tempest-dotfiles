@@ -384,6 +384,7 @@ detect_monitors() {
         kscreen-doctor)
             local name=""
             while IFS= read -r line; do
+
                 line="${line##*([[:space:]])}"
                 line="${line%%*([[:space:]])}"
 
@@ -402,7 +403,7 @@ detect_monitors() {
                         MON_MODES["$name"]+="${res} @ ${refresh}Hz"$'\n'
                     fi
                 fi
-            done < <(kscreen-doctor --outputs 2>/dev/null)
+            done < <(kscreen-doctor -o 2>/dev/null)
             ;;
 
         xrandr)
