@@ -13,7 +13,7 @@
 - fuzzel
 - swaync
 - pywal theming
-- wallpaper picker (automatic color scheme switch for hyprland, hyprlock, waybar, fuzzel, and swaync)
+- wallpaper picker (automatic color scheme switch for hyprland, hyprlock, waybar, and more)
 
 ## install
 ```bash
@@ -34,7 +34,6 @@ bash <(curl -fsSL https://raw.githubusercontent.com/tempasta/tempest-dotfiles/ma
 | `SUPER + 1-0` | switch workspace |
 | `SUPER + SHIFT + 1-0` | move window to workspace |
 | `Print` | screenshot (flameshot) |
-> `SUPER` = windows key
 
 ## notes
 - designed for nobara/fedora
@@ -50,14 +49,11 @@ bash <(curl -fsSL https://raw.githubusercontent.com/tempasta/tempest-dotfiles/ma
 </p>
 
 <p align="center">
-  <i>(too lazy to upload fuzzel previews for the rest)</i>
+  <img src="https://github.com/user-attachments/assets/065a8447-4beb-403d-a9c6-57b42b07bb0e">
+  <img src="https://github.com/user-attachments/assets/f4b8f56e-374b-4fda-9208-c3aac9774c71">
+  <img src="https://github.com/user-attachments/assets/243dfa10-c846-446a-b05f-16cc149aa251">
 </p>
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/8ec43a49-3eba-454e-a8d0-573892304012" width="48%">
-  <img src="https://github.com/user-attachments/assets/f4b8f56e-374b-4fda-9208-c3aac9774c71" width="48%">
-</p>
-
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/243dfa10-c846-446a-b05f-16cc149aa251" width="850">
+  <i>(many more wallpapers are included)</i>
 </p>
