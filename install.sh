@@ -147,6 +147,15 @@ else
     log warning "adwaita-dark missing"
 fi
 
+log shell "installing zshrc"
+
+if [ -f "$DOTFILES/.zshrc" ]; then
+    cp -f "$DOTFILES/.zshrc" "$HOME/.zshrc"
+    log shell "zshrc installed"
+else
+    log warning "zshrc not found in repo"
+fi
+
 log gtk "applying gtk settings"
 
 gsettings set org.gnome.desktop.interface gtk-theme "Adwaita-dark" || true
