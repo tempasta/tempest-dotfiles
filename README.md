@@ -13,7 +13,7 @@
 - fuzzel
 - swaync
 - pywal theming
-- wallpaper picker (automatic color scheme switch for hyprland, hyprlock, waybar, fuzzel, and swaync)
+- wallpaper picker (automatic color scheme switch for hyprland, hyprlock, waybar, and more)
 
 ## install
 ```bash
@@ -21,6 +21,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/tempasta/tempest-dotfiles/ma
 ```
 
 ## keybinds
+these aren't all the keybinds just the useful ones
 | keybind | action |
 |----------|--------|
 | `SUPER + T` | open terminal (kitty) |
@@ -33,8 +34,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/tempasta/tempest-dotfiles/ma
 | `SUPER + L` | lock screen (hyprlock) |
 | `SUPER + 1-0` | switch workspace |
 | `SUPER + SHIFT + 1-0` | move window to workspace |
-| `Print` | screenshot (flameshot) |
-> `SUPER` = windows key
+| `Print` or `Ctrl + Print` | screenshot (flameshot) |
 
 ## notes
 - designed for nobara/fedora
@@ -46,18 +46,16 @@ bash <(curl -fsSL https://raw.githubusercontent.com/tempasta/tempest-dotfiles/ma
 
 ## preview
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/23a7f6bb-e12a-4db1-ba10-d09abbdf050e" width="500">
+  <img src="https://github.com/user-attachments/assets/23a7f6bb-e12a-4db1-ba10-d09abbdf050e">
+  <img src="https://github.com/user-attachments/assets/bf5cfdb2-cd37-4d41-955c-fe064e2a9df5">
 </p>
 
 <p align="center">
-  <i>(too lazy to upload fuzzel previews for the rest)</i>
+  <img src="https://github.com/user-attachments/assets/065a8447-4beb-403d-a9c6-57b42b07bb0e">
+  <img src="https://github.com/user-attachments/assets/f4b8f56e-374b-4fda-9208-c3aac9774c71">
+  <img src="https://github.com/user-attachments/assets/243dfa10-c846-446a-b05f-16cc149aa251">
 </p>
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/8ec43a49-3eba-454e-a8d0-573892304012" width="48%">
-  <img src="https://github.com/user-attachments/assets/f4b8f56e-374b-4fda-9208-c3aac9774c71" width="48%">
-</p>
-
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/243dfa10-c846-446a-b05f-16cc149aa251" width="850">
+  <i>(many more wallpapers are included)</i>
 </p>
