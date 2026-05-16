@@ -329,6 +329,81 @@ print_monitor_context() {
 detect_monitors() {
     MON_LIST=()
 
+    backend="$(detect_backend || true)"
+    [[ -z "$backend" ]] && return 1
+
+    log info "monitor backend: $backend"
+
+    case "$backend" in
+        hyprctl)
+            local current=""
+            local line mon res
+
+            while IFS= read -r line; do
+
+                if [[ "$line" =~ ^Monitor[[:space:]]+([A-Za-z0-9._-]+) ]]; then
+                    mon="${BASH_REMATCH[1]}"
+                    current="$mon"
+
+                    MON_LIST+=("$mon")
+                    MON_MODEL["$mon"]="$mon"
+                    MON_MODES["$mon"]=""
+                    continue
+                fi
+
+                if [[ -n "$current" && "$line" =~ ([0-9]+)x([0-9]+)@([0-9.]+) ]]; then
+                    res="${BASH_REMATCH[1]}x${BASH_REMATCH[2]} @ ${BASH_REMATCH[3]}Hz"
+                    MON_MODES["$current"]+="$res"$'\n'
+                fi
+
+            done < <(hyprctl monitors all 2>/dev/null)
+            ;;
+
+        wlr-randr)
+            while IFS= read -r line; do
+                if [[ "$line" =~ ^([A-Za-z0-9._-]+)[[:space:]]\"([^\"]+)\" ]]; then
+                    mon="${BASH_REMATCH[1]}"
+                    MON_LIST+=("$mon")
+                    MON_MODEL["$mon"]="$(pretty_model "${BASH_REMATCH[2]}")"
+                    MON_MODES["$mon"]=""
+                fi
+
+                if [[ "$line" =~ ([0-9]+)x([0-9]+)[[:space:]]px,[[:space:]]+([0-9.]+) ]]; then
+                    MON_MODES["$mon"]+="${BASH_REMATCH[1]}x${BASH_REMATCH[2]} @ ${BASH_REMATCH[3]}Hz"$'\n'
+                fi
+            done < <(wlr-randr 2>/dev/null)
+            ;;
+
+        kscreen-doctor)
+            while IFS= read -r line; do
+                if [[ "$line" =~ Output:[[:space:]]+[0-9]+[[:space:]]+([A-Za-z0-9._-]+) ]]; then
+                    mon="${BASH_REMATCH[1]}"
+                    MON_LIST+=("$mon")
+                    MON_MODEL["$mon"]="$mon"
+                    MON_MODES["$mon"]="1920x1080 @ 60Hz"
+                fi
+            done < <(kscreen-doctor -o)
+            ;;
+
+        xrandr)
+            while IFS= read -r line; do
+                if [[ "$line" =~ ^([A-Za-z0-9._-]+)[[:space:]]connected ]]; then
+                    mon="${BASH_REMATCH[1]}"
+                    MON_LIST+=("$mon")
+                    MON_MODEL["$mon"]="$mon"
+                    MON_MODES["$mon"]=""
+                fi
+            done < <(xrandr --query)
+            ;;
+    esac
+
+    [[ ${#MON_LIST[@]} -eq 0 ]] && return 1
+    return 0
+}
+
+detect_monitors() {
+    MON_LIST=()
+
     local backend
     backend="$(detect_backend || true)"
     [[ -z "$backend" ]] && return 1
