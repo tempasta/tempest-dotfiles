@@ -38,10 +38,6 @@ wal -i "$FILE" || { echo "pywal failed"; exit 1; }
 
 mkdir -p ~/.config/waybar
 
-if [ -f ~/.cache/wal/theme.css ]; then
-    cp ~/.cache/wal/theme.css ~/.config/waybar/theme.css
-fi
-
 source ~/.cache/wal/colors.sh
 
 # ---------------- derived colors ----------------
@@ -77,7 +73,7 @@ awk -v active="col.active_border = 0xff$hex" \
 ' "$HYPR_CONF" > "$HYPR_CONF.tmp" && mv "$HYPR_CONF.tmp" "$HYPR_CONF"
 
 # ---------------- waybar ----------------
-cat > "$THEME_DIR/theme.css" <<EOF
+cat > ~/.config/waybar/theme.css <<EOF
 * {
     border: none;
     border-radius: 0;
@@ -281,7 +277,10 @@ pkill hyprpaper
 nohup hyprpaper >/dev/null 2>&1 & disown
 
 pkill waybar
-nohup waybar >/dev/null 2>&1 & disown
+rm -rf ~/.cache/waybar
+sleep 0.3
+waybar >/dev/null 2>&1 &
+disown
 
 pkill swaync
 nohup swaync >/dev/null 2>&1 & disown
