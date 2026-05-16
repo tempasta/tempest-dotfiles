@@ -19,12 +19,11 @@ FILE="$WALLPAPER_DIR/$FILE"
 
 echo "applying: $FILE"
 # ---------------- wallpaper ----------------
-MONITOR=$(hyprctl monitors | awk '/Monitor/ {print $2; exit}')
-[ -z "$MONITOR" ] && MONITOR="HDMI-A-2"
+MONITORS=$(hyprctl monitors | awk '/Monitor/ {print $2}')
 
 cat > "$HYPRPAPER_CONF" <<EOF
 wallpaper {
-    monitor = $MONITOR
+    monitor = $MONITORS
     path = $FILE
     fit_mode = cover
 }
