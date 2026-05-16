@@ -46,7 +46,7 @@ WALLPAPER_DEST="$HOME/Pictures/wallpapers"
 
 echo
 printf "${BOLD}${CYAN}  ╭──────────────────────────────────────────────────────╮${RESET}\n"
-printf "${BOLD}${CYAN}  │${RESET}        ${BOLD}tempest${RESET} ${DIM}·${RESET} dotfiles installer                    ${BOLD}${CYAN}│${RESET}\n"
+printf "${BOLD}${CYAN}  │${RESET}        ${BOLD}tempest${RESET} ${DIM}·${RESET} dotfiles installer                  ${BOLD}${CYAN}│${RESET}\n"
 printf "${BOLD}${CYAN}  ╰──────────────────────────────────────────────────────╯${RESET}\n"
 echo
 sudo -v
