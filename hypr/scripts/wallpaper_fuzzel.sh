@@ -182,7 +182,7 @@ input-field {
     inner_color = rgba(0, 0, 0, 0.3)
 
     font_color = rgb(${color7#\#})
-    font_family = Noto Sans Mono
+    font_family = JetBrainsMono Nerd Font
 
     outline_thickness = 1
 

@@ -24,6 +24,7 @@ log packages "installing packages"
 
 PACKAGES=(
     git
+    rsync
     hyprland
     hyprpaper
     waybar
@@ -41,6 +42,7 @@ PACKAGES=(
     brightnessctl
     pavucontrol
     wireplumber
+    jetbrains-mono-fonts
 )
 
 for pkg in "${PACKAGES[@]}"; do
@@ -71,44 +73,41 @@ cd "$DOTFILES"
 log backup "creating backup folder"
 mkdir -p "$BACKUP_DIR"
 
-backup_config() {
+sync_config() {
     local name="$1"
 
-    if [ -e "$CONFIG_DIR/$name" ]; then
-        log backup "backing up $name"
-
-        rm -rf "$BACKUP_DIR/$name.old" 2>/dev/null || true
-        mv "$CONFIG_DIR/$name" "$BACKUP_DIR/$name"
-    fi
-}
-
-copy_config() {
-    local name="$1"
-
-    local src="$DOTFILES/$name"
-    local dest="$CONFIG_DIR/$name"
+    local src="$DOTFILES/$name/"
+    local dest="$CONFIG_DIR/$name/"
+    local backup="$BACKUP_DIR/$name/"
 
     if [ ! -d "$src" ]; then
         log skip "missing config $name"
         return
     fi
 
-    backup_config "$name"
+    mkdir -p "$dest"
+    mkdir -p "$backup"
 
-    log config "copying $name"
-    cp -r "$src" "$dest"
+    log config "syncing $name"
+
+    rsync -ah \
+        --backup \
+        --backup-dir="$backup" \
+        "$src" "$dest"
 }
 
 log config "installing configs"
 
 mkdir -p "$CONFIG_DIR"
 
-copy_config hypr
-copy_config waybar
-copy_config fuzzel
-copy_config kitty
-copy_config swaync
-copy_config fastfetch
+sync_config hypr
+sync_config waybar
+sync_config fuzzel
+sync_config kitty
+sync_config swaync
+sync_config fastfetch
+sync_config equibop
+sync_config wal
 
 log wallpapers "installing wallpapers"
 
@@ -154,17 +153,42 @@ gsettings set org.gnome.desktop.interface gtk-theme "Adwaita-dark" || true
 gsettings set org.gnome.desktop.interface color-scheme "prefer-dark" || true
 gsettings set org.gnome.desktop.interface cursor-theme "Empty-Pixel-White" || true
 
+log fonts "installing jetbrains mono"
+
+fc-cache -fv >/dev/null 2>&1 || true
+
+log fonts "setting default monospace font"
+
+gsettings set org.gnome.desktop.interface monospace-font-name "JetBrains Mono 11" || true
+gsettings set org.gnome.desktop.interface font-name "Adwaita Sans 11" || true
+gsettings set org.gnome.desktop.interface document-font-name "Adwaita Sans 11" || true
+
+mkdir -p "$HOME/.config/fontconfig"
+
+cat > "$HOME/.config/fontconfig/fonts.conf" <<EOF
+<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<fontconfig>
+    <alias>
+        <family>monospace</family>
+        <prefer>
+            <family>JetBrains Mono</family>
+        </prefer>
+    </alias>
+</fontconfig>
+EOF
+
 log scripts "making scripts executable"
 chmod +x "$CONFIG_DIR/hypr/scripts/"*.sh 2>/dev/null || true
 
 log wallpaper "running wallpaper setup"
-log wallpaper "please choose your initial wallpaper. you can always change this later with the keybind [SUPER + W] when in hyprland"
+log wallpaper "please choose your initial wallpaper to generate a theme. you can always change this later with the keybind [SUPER + W] when in hyprland"
 
 if [ -f "$CONFIG_DIR/hypr/scripts/wallpaper_fuzzel.sh" ]; then
     bash "$CONFIG_DIR/hypr/scripts/wallpaper_fuzzel.sh" || true
 else
-    log warning "wallpaper_fuzzel.sh not found"
+    log warning "could not run wallpaper picker: wallpaper_fuzzel.sh not found"
 fi
 
 echo
-log done "install complete"
+log done "install complete!"
