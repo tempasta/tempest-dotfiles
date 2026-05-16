@@ -383,7 +383,6 @@ detect_monitors() {
 
         kscreen-doctor)
             local name=""
-
             while IFS= read -r line; do
                 line="${line##*([[:space:]])}"
                 line="${line%%*([[:space:]])}"
@@ -396,22 +395,20 @@ detect_monitors() {
                     continue
                 fi
 
-                if [[ -n "$name" && "$line" =~ ^Modes: ]]; then
-                    local modes_block="${line#Modes:}"
+                if [[ -n "$name" && "$line" =~ Modes:[[:space:]]*(.*) ]]; then
+                    local modes_block="${BASH_REMATCH[1]}"
 
                     for mode_entry in $modes_block; do
                         if [[ "$mode_entry" =~ ([0-9]+)x([0-9]+)@([0-9.]+) ]]; then
                             local w="${BASH_REMATCH[1]}"
                             local h="${BASH_REMATCH[2]}"
                             local r="${BASH_REMATCH[3]}"
-
-                            r="${r%%.*}"
-
+                            r="${r%%.*}" # Drop trailing decimals
                             MON_MODES["$name"]+="${w}x${h} @ ${r}Hz"$'\n'
                         fi
                     done
                 fi
-            done < <(kscreen-doctor -o 2>/dev/null)
+            done < <(kscreen-doctor -o 2>/dev/null | tr -s '\t\xc2\xa0' ' ')
             ;;
 
         xrandr)
