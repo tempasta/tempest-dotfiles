@@ -383,8 +383,8 @@ detect_monitors() {
 
         kscreen-doctor)
             local name=""
-            while IFS= read -r line; do
 
+            while IFS= read -r line; do
                 line="${line##*([[:space:]])}"
                 line="${line%%*([[:space:]])}"
 
@@ -396,12 +396,20 @@ detect_monitors() {
                     continue
                 fi
 
-                if [[ -n "$name" ]]; then
-                    if [[ "$line" =~ ([0-9]+x[0-9]+)@([0-9.]+) ]]; then
-                        local res="${BASH_REMATCH[1]}"
-                        local refresh="${BASH_REMATCH[2]}"
-                        MON_MODES["$name"]+="${res} @ ${refresh}Hz"$'\n'
-                    fi
+                if [[ -n "$name" && "$line" =~ ^Modes: ]]; then
+                    local modes_block="${line#Modes:}"
+
+                    for mode_entry in $modes_block; do
+                        if [[ "$mode_entry" =~ ([0-9]+)x([0-9]+)@([0-9.]+) ]]; then
+                            local w="${BASH_REMATCH[1]}"
+                            local h="${BASH_REMATCH[2]}"
+                            local r="${BASH_REMATCH[3]}"
+
+                            r="${r%%.*}"
+
+                            MON_MODES["$name"]+="${w}x${h} @ ${r}Hz"$'\n'
+                        fi
+                    done
                 fi
             done < <(kscreen-doctor -o 2>/dev/null)
             ;;
