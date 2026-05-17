@@ -68,6 +68,7 @@ PACKAGES=(
     wlr-randr
     wl-clipboard
     cliphist
+    python3-pywal16
     hyprland
     hyprpaper
     waybar
