@@ -375,6 +375,32 @@ print_monitor_context() {
         "$m" "${MON_MODEL[$m]}"
 }
 
+show_monitor_labels() {
+    if ! command -v hyprctl >/dev/null 2>&1 || ! command -v zenity >/dev/null 2>&1; then
+        return 0
+    fi
+
+    [[ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] && return 0
+
+    log info "showing temporary monitor labels"
+    echo
+
+    for m in "${MON_LIST[@]}"; do
+        local label="THIS IS ${m} (${MON_MODEL[$m]})"
+
+        hyprctl dispatch focusmonitor "$m" >/dev/null 2>&1 || true
+
+        zenity --info \
+            --no-wrap \
+            --title="Monitor identifier" \
+            --text="$label" \
+            --timeout=3 \
+            >/dev/null 2>&1 &
+
+        sleep 0.15
+    done
+}
+
 detect_backend() {
     if [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] \
         && command -v hyprctl >/dev/null 2>&1 \
@@ -456,29 +482,30 @@ detect_monitors() {
 
         kscreen-doctor)
             local name=""
-            local raw_output
-            raw_output=$(kscreen-doctor -o 2>/dev/null)
-            name=$(echo "$raw_output" | awk '/Output:/ {print $3}')
+            local line
 
-            if [[ -n "$name" ]]; then
-                MON_LIST+=("$name")
-                MON_MODEL["$name"]="$name"
-                MON_MODES["$name"]=""
-                local modes_line
-                modes_line=$(echo "$raw_output" | awk -F'Modes:' '{print $2}' | awk -F'Custom modes:' '{print $1}')
+            while IFS= read -r line; do
 
-                for mode_entry in $modes_line; do
-                    if echo "$mode_entry" | grep -qE "[0-9]+x[0-9]+@[0-9.]+"; then
-                        local w h r
-                        w=$(echo "$mode_entry" | cut -d':' -f2 | cut -d'x' -f1)
-                        h=$(echo "$mode_entry" | cut -d'x' -f2 | cut -d'@' -f1)
-                        r=$(echo "$mode_entry" | cut -d'@' -f2 | sed 's/[!*]//g' | cut -d'.' -f1)
-                        if [[ -n "$w" && -n "$h" && -n "$r" ]]; then
-                            MON_MODES["$name"]+="${w}x${h} @ ${r}Hz"$'\n'
-                        fi
-                    fi
-                done
-            fi
+                # NEW OUTPUT BLOCK
+                if [[ "$line" =~ ^Output:[[:space:]]+[0-9]+[[:space:]]+([A-Za-z0-9._-]+) ]]; then
+                    name="${BASH_REMATCH[1]}"
+
+                    MON_LIST+=("$name")
+                    MON_MODEL["$name"]="$name"
+                    MON_MODES["$name"]=""
+                    continue
+                fi
+
+                # MODES (only if inside a monitor block)
+                if [[ -n "$name" && "$line" =~ ([0-9]+)x([0-9]+)@([0-9.]+) ]]; then
+                    local w="${BASH_REMATCH[1]}"
+                    local h="${BASH_REMATCH[2]}"
+                    local r="${BASH_REMATCH[3]}"
+
+                    MON_MODES["$name"]+="${w}x${h} @ ${r}Hz"$'\n'
+                fi
+
+            done < <(kscreen-doctor -o 2>/dev/null)
             ;;
 
         xrandr)
