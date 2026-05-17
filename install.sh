@@ -66,6 +66,8 @@ PACKAGES=(
     git
     rsync
     wlr-randr
+    wl-clipboard
+    cliphist
     hyprland
     hyprpaper
     waybar
@@ -76,7 +78,6 @@ PACKAGES=(
     flameshot
     wl-clipboard
     xdg-desktop-portal-hyprland
-    polkit-gnome
     grim
     slurp
     swappy
@@ -587,6 +588,23 @@ else
     } > "$MONITOR_FILE"
 
     log ok "monitors.conf written"
+fi
+
+# ── clipboard (runtime start) ──────────────────────────────────────────────
+
+section "clipboard"
+
+if command -v cliphist >/dev/null 2>&1 && command -v wl-paste >/dev/null 2>&1; then
+    log info "starting clipboard watcher"
+
+    if ! pgrep -x "wl-paste" >/dev/null 2>&1; then
+        nohup wl-paste --watch cliphist store >/dev/null 2>&1 &
+        log ok "clipboard watcher started"
+    else
+        log skip "clipboard watcher already running"
+    fi
+else
+    log warn "cliphist or wl-paste missing"
 fi
 
 # ── wallpaper picker ──────────────────────────────────────────────────────────
