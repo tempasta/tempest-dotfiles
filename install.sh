@@ -242,6 +242,22 @@ log ok "hypr scripts marked executable"
 
 section "shell"
 
+ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+
+install_plugin() {
+    local repo="$1"
+    local name="$2"
+    local dir="$ZSH_CUSTOM/plugins/$name"
+
+    if [[ ! -d "$dir" ]]; then
+        log info "installing $name"
+        git clone "$repo" "$dir" >/dev/null 2>&1 || true
+        log ok "$name installed"
+    else
+        log skip "$name already installed"
+    fi
+}
+
 if ! command -v zsh >/dev/null 2>&1; then
     log info "installing zsh"
     sudo dnf install -y zsh >/dev/null 2>&1 || true
@@ -262,12 +278,34 @@ else
     log skip "oh-my-zsh already exists"
 fi
 
+# ── plugins ────────────────────────────────────────────────────────────────
+
+install_plugin \
+    https://github.com/zsh-users/zsh-autosuggestions \
+    zsh-autosuggestions
+
+install_plugin \
+    https://github.com/zsh-users/zsh-syntax-highlighting \
+    zsh-syntax-highlighting
+
+# ensure plugins are enabled
+if [[ -f "$HOME/.zshrc" ]]; then
+    if grep -q '^plugins=' "$HOME/.zshrc"; then
+        sed -i 's/^plugins=(git)/plugins=(git zsh-autosuggestions zsh-syntax-highlighting)/' "$HOME/.zshrc"
+    fi
+    log ok "zsh plugins enabled"
+fi
+
+# ── zshrc install ──────────────────────────────────────────────────────────
+
 if [ -f "$DOTFILES/.zshrc" ]; then
     cp -f "$DOTFILES/.zshrc" "$HOME/.zshrc"
     log ok "zshrc installed from repo"
 else
     log warn "zshrc not found in dotfiles"
 fi
+
+# ── default shell ──────────────────────────────────────────────────────────
 
 if [[ "$SHELL" != "$(which zsh)" ]]; then
     log info "setting zsh as default shell"
@@ -337,9 +375,106 @@ print_monitor_context() {
         "$m" "${MON_MODEL[$m]}"
 }
 
+detect_monitors() {
+    MON_LIST=()
+    shopt -s extglob
+
+    local backend
+    backend="$(detect_backend || true)"
+    [[ -z "$backend" ]] && return 1
+
+    log info "monitor backend: $backend"
+
+    case "$backend" in
+        hyprctl)
+            local current="" name="" res=""
+            while IFS= read -r line; do
+                if [[ "$line" =~ ^Monitor[[:space:]]+([A-Za-z0-9._-]+) ]]; then
+                    name="${BASH_REMATCH[1]}"
+                    current="$name"
+                    MON_LIST+=("$name")
+                    MON_MODEL["$name"]="$name"
+                    MON_MODES["$name"]=""
+                    continue
+                fi
+                if [[ -n "$current" && "$line" =~ ([0-9]+)x([0-9]+)@([0-9.]+) ]]; then
+                    res="${BASH_REMATCH[1]}x${BASH_REMATCH[2]} @ ${BASH_REMATCH[3]}Hz"
+                    MON_MODES["$current"]+="$res"$'\n'
+                fi
+                if [[ "$line" == "" ]]; then
+                    current=""
+                fi
+            done < <(hyprctl monitors all 2>/dev/null)
+            ;;
+
+        wlr-randr)
+            local name="" model=""
+            while IFS= read -r line; do
+                if [[ "$line" =~ ^([A-Za-z0-9._-]+)[[:space:]]\"([^\"]+)\" ]]; then
+                    name="${BASH_REMATCH[1]}"
+                    model="${BASH_REMATCH[2]}"
+                    MON_LIST+=("$name")
+                    MON_MODEL["$name"]="$(pretty_model "$model")"
+                    MON_MODES["$name"]=""
+                    continue
+                fi
+                if [[ -n "$name" && "$line" =~ ([0-9]+)x([0-9]+)[[:space:]]px,[[:space:]]+([0-9.]+) ]]; then
+                    MON_MODES["$name"]+="${BASH_REMATCH[1]}x${BASH_REMATCH[2]} @ ${BASH_REMATCH[3]}Hz"$'\n'
+                fi
+            done < <(wlr-randr 2>/dev/null)
+            ;;
+
+        kscreen-doctor)
+            local name=""
+            local raw_output
+            raw_output=$(kscreen-doctor -o 2>/dev/null)
+            name=$(echo "$raw_output" | awk '/Output:/ {print $3}')
+
+            if [[ -n "$name" ]]; then
+                MON_LIST+=("$name")
+                MON_MODEL["$name"]="$name"
+                MON_MODES["$name"]=""
+                local modes_line
+                modes_line=$(echo "$raw_output" | awk -F'Modes:' '{print $2}' | awk -F'Custom modes:' '{print $1}')
+
+                for mode_entry in $modes_line; do
+                    if echo "$mode_entry" | grep -qE "[0-9]+x[0-9]+@[0-9.]+"; then
+                        local w h r
+                        w=$(echo "$mode_entry" | cut -d':' -f2 | cut -d'x' -f1)
+                        h=$(echo "$mode_entry" | cut -d'x' -f2 | cut -d'@' -f1)
+                        r=$(echo "$mode_entry" | cut -d'@' -f2 | sed 's/[!*]//g' | cut -d'.' -f1)
+                        if [[ -n "$w" && -n "$h" && -n "$r" ]]; then
+                            MON_MODES["$name"]+="${w}x${h} @ ${r}Hz"$'\n'
+                        fi
+                    fi
+                done
+            fi
+            ;;
+
+        xrandr)
+            local name=""
+            while IFS= read -r line; do
+                if [[ "$line" =~ ^([A-Za-z0-9._-]+)[[:space:]]connected ]]; then
+                    name="${BASH_REMATCH[1]}"
+                    MON_LIST+=("$name")
+                    MON_MODEL["$name"]="$name"
+                    MON_MODES["$name"]=""
+                    continue
+                fi
+                if [[ -n "$name" && "$line" =~ ^[[:space:]]*([0-9]+x[0-9]+)[[:space:]]+([0-9.]+)\*? ]]; then
+                    MON_MODES["$name"]+="${BASH_REMATCH[1]} @ ${BASH_REMATCH[2]}Hz"$'\n'
+                fi
+            done < <(xrandr --query)
+            ;;
+    esac
+
+    [[ ${#MON_LIST[@]} -eq 0 ]] && return 1
+    return 0
+}
+
 if ! detect_monitors; then
     log warn "no monitors detected"
-    return 1
+    exit 1
 fi
 
 log ok "found ${#MON_LIST[@]} monitor(s)"
