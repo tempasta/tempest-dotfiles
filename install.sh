@@ -375,6 +375,36 @@ print_monitor_context() {
         "$m" "${MON_MODEL[$m]}"
 }
 
+detect_backend() {
+    if [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] \
+        && command -v hyprctl >/dev/null 2>&1 \
+        && hyprctl monitors >/dev/null 2>&1; then
+        echo "hyprctl"
+        return 0
+    fi
+
+    if command -v wlr-randr >/dev/null 2>&1; then
+        if wlr-randr 2>&1 | grep -qE "Monitor|Output"; then
+            echo "wlr-randr"
+            return 0
+        fi
+    fi
+
+    if command -v kscreen-doctor >/dev/null 2>&1; then
+        if kscreen-doctor --outputs 2>&1 | grep -qE "Output|connected|Name"; then
+            echo "kscreen-doctor"
+            return 0
+        fi
+    fi
+
+    if command -v xrandr >/dev/null 2>&1 && xrandr --query >/dev/null 2>&1; then
+        echo "xrandr"
+        return 0
+    fi
+
+    return 1
+}
+
 detect_monitors() {
     MON_LIST=()
     shopt -s extglob
