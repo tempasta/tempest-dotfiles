@@ -40,6 +40,7 @@ FILE="$WALLPAPER_DIR/$FILE"
 [ ! -f "$FILE" ] && exit 1
 
 echo "applying: $FILE"
+
 # ---------------- wallpaper ----------------
 mapfile -t MONITORS < <(get_monitors)
 
@@ -51,16 +52,14 @@ fi
 mkdir -p "$(dirname "$HYPRPAPER_CONF")"
 
 {
-    for mon in "${MONITORS[@]}"; do
-        cat <<EOF
-wallpaper {
-    monitor = $mon
-    path = $FILE
-    fit_mode = cover
-}
+    echo "preload = $FILE"
+    echo
 
-EOF
+    for mon in "${MONITORS[@]}"; do
+        echo "wallpaper = $mon,$FILE"
     done
+
+    echo
     echo "splash = false"
     echo "ipc = off"
 } > "$HYPRPAPER_CONF"
@@ -119,9 +118,9 @@ window#waybar {
     border: 2px solid ${BORDER_RGBA};
 }
 
-#custom-power {
-    margin-left: 8px;
-    margin-right: 8px;
+#custom-power, #battery {
+    margin-left: 4px;
+    margin-right: 4px;
 }
 
 #tray {
@@ -132,10 +131,12 @@ window#waybar {
 #clock,
 #cpu,
 #memory,
+#battery,
+#custom-power,
 #pulseaudio,
 #window {
-    color: $color7;
-    padding: 8px;
+    color: #c6c7c8;
+    padding: 4px;
 }
 
 button:hover {
@@ -143,6 +144,26 @@ button:hover {
     text-shadow: none;
     background: none;
     transition: none;
+}
+
+#workspaces button.active {
+    color: #ffffff;
+}
+
+#pulseaudio {
+    margin-right: 4px;
+}
+
+#battery {
+    margin-right: 4px;
+}
+
+#battery:not(.empty) {
+    margin-right: 4px;
+}
+
+#battery:not(.empty) ~ #pulseaudio {
+    margin-right: 4px;
 }
 EOF
 

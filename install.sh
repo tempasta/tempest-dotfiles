@@ -237,6 +237,45 @@ section "scripts"
 chmod +x "$CONFIG_DIR/hypr/scripts/"*.sh 2>/dev/null || true
 log ok "hypr scripts marked executable"
 
+# ── shell (zsh + oh-my-zsh) ────────────────────────────────────────────────
+
+section "shell"
+
+if ! command -v zsh >/dev/null 2>&1; then
+    log info "installing zsh"
+    sudo dnf install -y zsh >/dev/null 2>&1 || true
+    log ok "zsh installed"
+else
+    log skip "zsh already installed"
+fi
+
+if [ ! -d "$HOME/.oh-my-zsh" ]; then
+    log info "installing oh-my-zsh"
+
+    RUNZSH=no CHSH=no KEEP_ZSHRC=yes \
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" \
+    >/dev/null 2>&1 || true
+
+    log ok "oh-my-zsh installed"
+else
+    log skip "oh-my-zsh already exists"
+fi
+
+if [ -f "$DOTFILES/.zshrc" ]; then
+    cp -f "$DOTFILES/.zshrc" "$HOME/.zshrc"
+    log ok "zshrc installed from repo"
+else
+    log warn "zshrc not found in dotfiles"
+fi
+
+if [[ "$SHELL" != "$(which zsh)" ]]; then
+    log info "setting zsh as default shell"
+    chsh -s "$(which zsh)" "$USER" >/dev/null 2>&1 || true
+    log ok "default shell set to zsh"
+else
+    log skip "zsh already default shell"
+fi
+
 # ── monitors ─────────────────────────────────────────────────────────────────
 
 section "monitors"
