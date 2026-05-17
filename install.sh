@@ -239,6 +239,8 @@ log ok "hypr scripts marked executable"
 
 # ── monitors ─────────────────────────────────────────────────────────────────
 
+section "monitors"
+
 declare -a MON_LIST=()
 declare -A MON_MODEL=()
 declare -A MON_MODES=()
@@ -321,15 +323,33 @@ print_monitor_context() {
 }
 
 detect_backend() {
-    if [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
+    if [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] \
+        && command -v hyprctl >/dev/null 2>&1 \
+        && hyprctl monitors >/dev/null 2>&1; then
         echo "hyprctl"
-    elif command -v kscreen-doctor >/dev/null 2>&1; then
-        echo "kscreen-doctor"
-    elif command -v wlr-randr >/dev/null 2>&1; then
-        echo "wlr-randr"
-    elif command -v xrandr >/dev/null 2>&1; then
-        echo "xrandr"
+        return 0
     fi
+
+    if command -v wlr-randr >/dev/null 2>&1; then
+        if wlr-randr 2>&1 | grep -qE "Monitor|Output"; then
+            echo "wlr-randr"
+            return 0
+        fi
+    fi
+
+    if command -v kscreen-doctor >/dev/null 2>&1; then
+        if kscreen-doctor --outputs 2>&1 | grep -qE "Output|connected|Name"; then
+            echo "kscreen-doctor"
+            return 0
+        fi
+    fi
+
+    if command -v xrandr >/dev/null 2>&1 && xrandr --query >/dev/null 2>&1; then
+        echo "xrandr"
+        return 0
+    fi
+
+    return 1
 }
 
 detect_monitors() {
@@ -383,32 +403,29 @@ detect_monitors() {
 
         kscreen-doctor)
             local name=""
-            while IFS= read -r line; do
-                line="${line##*([[:space:]])}"
-                line="${line%%*([[:space:]])}"
+            local raw_output
+            raw_output=$(kscreen-doctor -o 2>/dev/null)
+            name=$(echo "$raw_output" | awk '/Output:/ {print $3}')
 
-                if [[ "$line" =~ ^Output:[[:space:]]*[0-9]+[[:space:]]+([^[:space:]]+) ]]; then
-                    name="${BASH_REMATCH[1]}"
-                    MON_LIST+=("$name")
-                    MON_MODEL["$name"]="$name"
-                    MON_MODES["$name"]=""
-                    continue
-                fi
+            if [[ -n "$name" ]]; then
+                MON_LIST+=("$name")
+                MON_MODEL["$name"]="$name"
+                MON_MODES["$name"]=""
+                local modes_line
+                modes_line=$(echo "$raw_output" | awk -F'Modes:' '{print $2}' | awk -F'Custom modes:' '{print $1}')
 
-                if [[ -n "$name" && "$line" =~ Modes:[[:space:]]*(.*) ]]; then
-                    local modes_block="${BASH_REMATCH[1]}"
-
-                    for mode_entry in $modes_block; do
-                        if [[ "$mode_entry" =~ ([0-9]+)x([0-9]+)@([0-9.]+) ]]; then
-                            local w="${BASH_REMATCH[1]}"
-                            local h="${BASH_REMATCH[2]}"
-                            local r="${BASH_REMATCH[3]}"
-                            r="${r%%.*}" # Drop trailing decimals
+                for mode_entry in $modes_line; do
+                    if echo "$mode_entry" | grep -qE "[0-9]+x[0-9]+@[0-9.]+"; then
+                        local w h r
+                        w=$(echo "$mode_entry" | cut -d':' -f2 | cut -d'x' -f1)
+                        h=$(echo "$mode_entry" | cut -d'x' -f2 | cut -d'@' -f1)
+                        r=$(echo "$mode_entry" | cut -d'@' -f2 | sed 's/[!*]//g' | cut -d'.' -f1)
+                        if [[ -n "$w" && -n "$h" && -n "$r" ]]; then
                             MON_MODES["$name"]+="${w}x${h} @ ${r}Hz"$'\n'
                         fi
-                    done
-                fi
-            done < <(kscreen-doctor -o 2>/dev/null | tr -s '\t\xc2\xa0' ' ')
+                    fi
+                done
+            fi
             ;;
 
         xrandr)
@@ -439,7 +456,7 @@ else
     show_monitor_labels
 
     for m in "${MON_LIST[@]}"; do
-        printf "  ${BOLD}%s${RESET}\n" "$m"
+        printf "\n  ${BOLD}${MAGENTA}󰍹 ${RESET}${BOLD}%s${RESET}\n" "$m"
         mapfile -t modes < <(printf '%s' "${MON_MODES[$m]}" | sed '/^$/d')
 
         if [[ ${#modes[@]} -eq 0 ]]; then
@@ -448,12 +465,12 @@ else
             MON_SEL_R["$m"]=60
         else
             for i in "${!modes[@]}"; do
-                printf "    %2d) %s\n" "$((i+1))" "${modes[$i]}"
+                printf "    ${DIM}%2d)${RESET} %s\n" "$((i+1))" "${modes[$i]}"
             done
 
             while true; do
                 print_monitor_context "$m"
-                printf "  ➜ resolution [1-%d]: " "${#modes[@]}"
+                printf "  ${CYAN}➜${RESET} resolution [1-%d]: " "${#modes[@]}"
                 read -r choice || choice="1"
                 choice="${choice:-1}"
 
@@ -492,25 +509,27 @@ else
 
     top_h=0; mid_h=0; bot_h=0
     for m in "${MON_LIST[@]}"; do
+        h_val="${MON_SEL_H[$m]:-1080}"
         case "${MON_ROW[$m]:-middle}" in
-            top)    (( MON_SEL_H[$m] > top_h )) && top_h="${MON_SEL_H[$m]}" ;;
-            middle) (( MON_SEL_H[$m] > mid_h )) && mid_h="${MON_SEL_H[$m]}" ;;
-            bottom) (( MON_SEL_H[$m] > bot_h )) && bot_h="${MON_SEL_H[$m]}" ;;
+            top)    (( h_val > top_h )) && top_h="$h_val" ;;
+            middle) (( h_val > mid_h )) && mid_h="$h_val" ;;
+            bottom) (( h_val > bot_h )) && bot_h="$h_val" ;;
         esac
     done
 
     for row in top middle bottom; do
-        x=0
+        x_coord=0
         for col in left middle right; do
             for m in "${MON_LIST[@]}"; do
                 if [[ "${MON_ROW[$m]:-middle}" == "$row" && "${MON_COL[$m]:-middle}" == "$col" ]]; then
-                    MON_X["$m"]="$x"
+                    MON_X["$m"]="$x_coord"
                     case "$row" in
                         top)    MON_Y["$m"]=0 ;;
                         middle) MON_Y["$m"]="$top_h" ;;
                         bottom) MON_Y["$m"]=$((top_h + mid_h)) ;;
                     esac
-                    x=$((x + MON_SEL_W[$m]))
+                    w_val="${MON_SEL_W[$m]:-1920}"
+                    x_coord=$((x_coord + w_val))
                 fi
             done
         done
@@ -518,14 +537,15 @@ else
 
     MONITOR_FILE="$CONFIG_DIR/hypr/monitors.conf"
     mkdir -p "$CONFIG_DIR/hypr"
-    : > "$MONITOR_FILE"
-
-    for m in "${MON_LIST[@]}"; do
-        printf "monitor = %s, %sx%s@%s, %sx%s, 1\n" \
-            "$m" \
-            "${MON_SEL_W[$m]}" "${MON_SEL_H[$m]}" "${MON_SEL_R[$m]}" \
-            "${MON_X[$m]:-0}" "${MON_Y[$m]:-0}" >> "$MONITOR_FILE"
-    done
+    
+    {
+        for m in "${MON_LIST[@]}"; do
+            printf "monitor = %s, %sx%s@%s, %sx%s, 1\n" \
+                "$m" \
+                "${MON_SEL_W[$m]:-1920}" "${MON_SEL_H[$m]:-1080}" "${MON_SEL_R[$m]:-60}" \
+                "${MON_X[$m]:-0}" "${MON_Y[$m]:-0}"
+        done
+    } > "$MONITOR_FILE"
 
     log ok "monitors.conf written"
 fi
@@ -543,12 +563,10 @@ else
     log warn "wallpaper_fuzzel.sh not found, skipping picker"
 fi
 
-# Kill compositor-adjacent processes that the picker may have spawned
 pkill hyprpaper || true
 pkill waybar    || true
 pkill swaync    || true
 
 # ── done ──────────────────────────────────────────────────────────────────────
-
 
 log done "install complete"
