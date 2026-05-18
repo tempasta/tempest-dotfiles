@@ -8,6 +8,8 @@
 
 ## features
 - hyprland
+- hyprpaper
+- hyprlock
 - waybar
 - kitty
 - fuzzel
@@ -42,6 +44,7 @@ these aren't all the keybinds just the useful ones
 - wallpapers are copied to `~/Pictures/wallpapers` you can add more if you want
 - after install, it will prompt you to choose a wallpaper to generate the initial theme
 - change wallpapers later with `SUPER + W`
+- a theme for equibop (discord) is included which also syncs and works well with any wallpaper
 - manual configuration of `hyprland.conf` may be required for multiple monitors
 
 ## preview
