@@ -71,6 +71,7 @@ PACKAGES=(
     python3-pywal16
     hyprland
     hyprpaper
+    hyprlock
     waybar
     fuzzel
     kitty
