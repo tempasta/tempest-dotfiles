@@ -9,7 +9,7 @@
   "margin-right": 20,
   "margin-bottom": -10,
 
-  "modules-left": ["custom/power", "hyprland/workspaces", "hyprland/window"],
+  "modules-left": ["custom/power", "hyprland/workspaces"],
   "modules-center": ["custom/clock"],
   "modules-right": ["tray", "cpu", "memory", "pulseaudio", "battery"],
 
@@ -17,10 +17,6 @@
     "format": "[  ]",
     "tooltip": false,
     "on-click": "~/.config/waybar/scripts/power.sh"
-  },
-
-  "hyprland/window": {
-    "format": "[ {} ]"
   },
 
   "custom/clock": {

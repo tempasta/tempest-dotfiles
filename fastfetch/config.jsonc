@@ -1,136 +1,115 @@
 {
     "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+
     "logo": {
         "type": "builtin",
+        "source": "artix",
         "height": 10,
         "width": 10,
         "padding": {
-            "top": 5,
-            "left": 4
+            "top": 1,
+            "left": 1
         },
         "color": {
-            "1": "1"
+            "1": "green"
         }
     },
+
     "modules": [
         "break",
+
         {
             "type": "custom",
-            "format": "\u001b[90m┌──────────────────────Hardware──────────────────────┐"
+            "format": "\u001b[90m──────────────────────────────────────────────"
         },
-        {
-            "type": "host",
-            "key": "󰌢  PC",
-            "keyColor": "green"
-        },
+
+        "break",
+
         {
             "type": "cpu",
-            "key": "│ ├󰻠 ",
+            "key": "[cpu]",
             "keyColor": "green"
         },
         {
             "type": "gpu",
-            "key": "│ ├󰍹 ",
+            "key": "[gpu]",
             "keyColor": "green"
         },
         {
-            "type": "memory",
-            "key": "│ ├󰑭 ",
-            "keyColor": "green"
+            "type": "command",
+            "key": "[ram]",
+            "keyColor": "green",
+            "text": "used=$(free -b | awk '/Mem:/ {print $3}'); total=$(free -b | awk '/Mem:/ {print $2}'); fake_used=$((used / 8)); percent=$((fake_used * 100 / total)); awk -v u=\"$fake_used\" -v t=\"$total\" -v p=\"$percent\" 'function fmt(x){ if(x < 1024^3) return sprintf(\"%.2f MiB\", x/1024/1024); return sprintf(\"%.2f GiB\", x/1024/1024/1024) } BEGIN { printf \"%s / %.2f GiB (%d%%)\", fmt(u), t/1024/1024/1024, p }'"
         },
         {
             "type": "disk",
-            "key": "└ └󰋊 ",
+            "key": "[disk]",
             "keyColor": "green"
         },
-        {
-            "type": "custom",
-            "format": "\u001b[90m└────────────────────────────────────────────────────┘"
-        },
+
         "break",
+
         {
             "type": "custom",
-            "format": "\u001b[90m┌──────────────────────Software──────────────────────┐"
+            "key": "[os]",
+            "keyColor": "cyan",
+            "format": "Artix Linux x86_64"
         },
         {
-            "type": "os",
-            "key": "  OS",
-            "keyColor": "yellow"
+            "type": "custom",
+            "key": "[kernel]",
+            "keyColor": "cyan",
+            "format": "Linux 6.6.13-artix1-1"
         },
         {
-            "type": "kernel",
-            "key": "│ ├󰌽 ",
-            "keyColor": "yellow"
-        },
-        {
-            "type": "bios",
-            "key": "│ ├󰖡 ",
-            "keyColor": "yellow"
+            "type": "custom",
+            "key": "[init]",
+            "keyColor": "cyan",
+            "format": "dinit 0.19.4"
         },
         {
             "type": "shell",
-            "key": "└ └󰞷 ",
-            "keyColor": "yellow"
+            "key": "[shell]",
+            "keyColor": "cyan"
         },
+
         "break",
-        {
-            "type": "de",
-            "key": "󰧨  DE",
-            "keyColor": "blue"
-        },
-        {
-            "type": "lm",
-            "key": "│ ├󰍁 ",
-            "keyColor": "blue"
-        },
+
         {
             "type": "wm",
-            "key": "│ ├󱂬 ",
-            "keyColor": "blue"
-        },
-        {
-            "type": "wmtheme",
-            "key": "│ ├󰉦 ",
+            "key": "[wm]",
             "keyColor": "blue"
         },
         {
             "type": "terminal",
-            "key": "└ └󰆍 ",
+            "key": "[term]",
             "keyColor": "blue"
         },
-        {
-            "type": "custom",
-            "format": "\u001b[90m└────────────────────────────────────────────────────┘"
-        },
+
         "break",
-        {
-            "type": "custom",
-            "format": "\u001b[90m┌────────────────────Uptime / Age / DT────────────────────┐"
-        },
-        {
-            "type": "command",
-            "key": "  ›  OS Age  ",
-            "keyColor": "magenta",
-            "text": "birth_install=$(stat -c %W /); current=$(date +%s); time_progression=$((current - birth_install)); days_difference=$((time_progression / 86400)); echo $days_difference days"
-        },
+
         {
             "type": "uptime",
-            "key": "  ›  Uptime  ",
+            "key": "[uptime]",
             "keyColor": "magenta"
         },
         {
             "type": "datetime",
-            "key": "  ›  Date    ",
+            "key": "[date]",
             "keyColor": "magenta"
         },
-        {
-            "type": "custom",
-            "format": "\u001b[90m└─────────────────────────────────────────────────────────┘"
-        },
+
+        "break",
+
         {
             "type": "colors",
-            "paddingLeft": 2,
-            "symbol": "circle"
+            "symbol": "diamond",
+            "paddingLeft": 0
+        },
+
+        {
+            "type": "custom",
+            "format": "\u001b[90m──────────────────────────────────────────────"
         }
     ]
 }
