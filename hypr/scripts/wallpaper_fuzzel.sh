@@ -104,6 +104,33 @@ awk -v active="col.active_border = 0xff$hex" \
 {print}
 ' "$HYPR_CONF" > "$HYPR_CONF.tmp" && mv "$HYPR_CONF.tmp" "$HYPR_CONF"
 
+# ---------------- waybar derived colors ----------------
+hex7="${color7#\#}"
+
+r7=$((16#${hex7:0:2}))
+g7=$((16#${hex7:2:2}))
+b7=$((16#${hex7:4:2}))
+
+lighten() {
+    local c=$1
+    echo $(( c + (255 - c) * 40 / 100 ))
+}
+
+r7_light=$(lighten "$r7")
+g7_light=$(lighten "$g7")
+b7_light=$(lighten "$b7")
+
+ACTIVE_COLOR=$(printf "#%02x%02x%02x" "$r7_light" "$g7_light" "$b7_light")
+
+# ---------------- waybar background ----------------
+hex0="${color0#\#}"
+
+r0=$((16#${hex0:0:2}))
+g0=$((16#${hex0:2:2}))
+b0=$((16#${hex0:4:2}))
+
+WAYBAR_BG="rgba($r0, $g0, $b0, 0.6)"
+
 # ---------------- waybar ----------------
 cat > ~/.config/waybar/theme.css <<EOF
 * {
@@ -114,7 +141,7 @@ cat > ~/.config/waybar/theme.css <<EOF
 }
 
 window#waybar {
-    background: rgba(0,0,0,0.35);
+    background: ${WAYBAR_BG};
     border: 2px solid ${BORDER_RGBA};
 }
 
@@ -135,7 +162,7 @@ window#waybar {
 #custom-power,
 #pulseaudio,
 #window {
-    color: #c6c7c8;
+    color: ${color7};
     padding: 4px;
 }
 
@@ -147,7 +174,7 @@ button:hover {
 }
 
 #workspaces button.active {
-    color: #ffffff;
+    color: ${ACTIVE_COLOR};
 }
 
 #pulseaudio {
@@ -173,6 +200,7 @@ include ~/.cache/wal/colors-kitty.conf
 font_family JetBrainsMono Nerd Font
 font_size 11
 confirm_os_window_close 0
+background_opacity 0.65
 EOF
 
 pkill -USR1 kitty 2>/dev/null
@@ -221,7 +249,7 @@ background {
 label {
     text = cmd[update:1000] echo "[ \$(date +'%I:%M:%S %P') ]"
     font_size = 32
-    color = rgba(${color1#\#}aa)
+    color = rgba(${color7#\#}aa)
     position = 0, 100
     halign = center
     valign = center
@@ -326,7 +354,44 @@ sed -i -E \
     "s|--accentcolor:[[:space:]]*[0-9]+,[[:space:]]*[0-9]+,[[:space:]]*[0-9]+;|--accentcolor: ${ACCENT_RGB};|g" \
     "$EQUIBOP_CSS"
 
+# ---------------- cava ----------------
+mkdir -p ~/.config/cava
+
+awk -v color="${color2}" '
+BEGIN { in_color=0; fg_set=0 }
+
+/^\[color\]/ {
+    in_color=1
+    print
+    next
+}
+
+/^\[/ && !/^\[color\]/ {
+    if (in_color && !fg_set)
+        print "foreground = '\''" color "'\''"
+    in_color=0
+}
+
+in_color && /^[; ]*foreground[ ]*=/ {
+    print "foreground = '\''" color "'\''"
+    fg_set=1
+    next
+}
+
+{ print }
+
+END {
+    if (in_color && !fg_set)
+        print "foreground = '\''" color "'\''"
+}
+' ~/.config/cava/config > ~/.config/cava/config.tmp \
+&& mv ~/.config/cava/config.tmp ~/.config/cava/config
+
+pkill -USR1 cava 2>/dev/null
+
 # ---------------- restart ----------------
+hyprctl reload
+
 pkill hyprpaper
 nohup hyprpaper >/dev/null 2>&1 & disown
 
@@ -338,5 +403,7 @@ disown
 
 pkill swaync
 nohup swaync >/dev/null 2>&1 & disown
+
+pkill kded6
 
 echo "done"

@@ -9,6 +9,10 @@
 
 @import url('https://mwittrien.github.io/BetterDiscordAddons/Themes/BasicBackground/BasicBackground.css');
 
+.title_c38106 {
+  display: none;
+}
+
 :root {
   --background: transparent;
   --backgroundsize: cover;
@@ -17,12 +21,12 @@
   --popout: transparent;
   --popoutsize: var(--backgroundsize);
   --backgroundposition: center;
-  --popoutblur: 0px;
+  --popoutblur: 4px;
   --transparencycolor: 0,0,0;
-  --accentcolor: 145, 147, 142;
+  --accentcolor: 190, 97, 106;
   --backdrop: rgba(0,0,0,0.85);
   --textshadow: transparent;
-  --transparencyalpha: 0.16;
+  --transparencyalpha: 0.2;
   --messagetransparency: 0;
   --guildchanneltransparency: 0.06;
   --chatinputtransparency: 0;
