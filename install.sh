@@ -69,6 +69,7 @@ PACKAGES=(
     wl-clipboard
     cliphist
     python3-pywal16
+    cava
     hyprland
     hyprpaper
     hyprlock
@@ -147,7 +148,7 @@ sync_config() {
 
 mkdir -p "$CONFIG_DIR"
 
-for cfg in hypr waybar fuzzel kitty swaync fastfetch equibop wal; do
+for cfg in hypr waybar fuzzel kitty swaync fastfetch equibop wal cava; do
     sync_config "$cfg"
 done
 
