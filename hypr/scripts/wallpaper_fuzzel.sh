@@ -142,7 +142,7 @@ cat > ~/.config/waybar/theme.css <<EOF
 
 window#waybar {
     background: ${WAYBAR_BG};
-    border: 2px solid ${BORDER_RGBA};
+    border: 2px solid ${color1};
 }
 
 #custom-power, #battery {
@@ -155,14 +155,15 @@ window#waybar {
 }
 
 #workspaces button,
-#clock,
+#custom-clock,
 #cpu,
 #memory,
 #battery,
+#network,
 #custom-power,
 #pulseaudio,
 #window {
-    color: ${color7};
+    color: ${color15};
     padding: 4px;
 }
 
@@ -174,7 +175,7 @@ button:hover {
 }
 
 #workspaces button.active {
-    color: ${ACTIVE_COLOR};
+    color: ${color11};
 }
 
 #pulseaudio {
