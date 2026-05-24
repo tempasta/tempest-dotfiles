@@ -70,6 +70,7 @@ PACKAGES=(
     cliphist
     python3-pywal16
     cava
+    nmtui
     hyprland
     hyprpaper
     hyprlock
