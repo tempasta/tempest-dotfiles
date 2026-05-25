@@ -1,6 +1,6 @@
 #!/bin/bash
 
-WALLPAPER_DIR="$HOME/Pictures/wallpapers"
+WALLPAPER_DIR="$HOME/.config/wallpapers"
 HYPRPAPER_CONF="$HOME/.config/hypr/hyprpaper.conf"
 HYPR_CONF="$HOME/.config/hypr/hyprland.conf"
 THEME_DIR="$HOME/.cache/wal"

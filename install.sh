@@ -40,7 +40,7 @@ DOTFILES="$HOME/dotfiles"
 REPO="https://github.com/tempasta/tempest-dotfiles.git"
 CONFIG_DIR="$HOME/.config"
 BACKUP_DIR="$HOME/.config-backup"
-WALLPAPER_DEST="$HOME/Pictures/wallpapers"
+WALLPAPER_DEST="$HOME/.config/wallpapers"
 
 # ── banner ────────────────────────────────────────────────────────────────────
 
