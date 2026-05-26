@@ -40,13 +40,13 @@
   "cpu": {
     "format": "[ 󰻠 {usage}% ]",
     "interval": 2,
-    "on-click": "kitty -e btop"
+    "on-click": "kitty --title btop btop"
   },
 
   "memory": {
     "format": "[ 󰍛 {percentage}% ]",
     "interval": 5,
-    "on-click": "kitty -e btop"
+    "on-click": "kitty --title btop btop"
   },
 
   "battery": {
