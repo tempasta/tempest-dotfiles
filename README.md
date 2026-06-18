@@ -1,10 +1,7 @@
 <h1 align="center">
-  minimal hyprland dotfiles for nobara/fedora
+  <img src="https://github.com/user-attachments/assets/7492b9b8-a822-4f16-a118-636ff46338dd" />
+  <img src="https://github.com/user-attachments/assets/991db5b3-2cb2-4b5b-9f8f-0485dc220122" />
 </h1>
-
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/ad463cb2-d5e0-4c68-9db5-27f95108269e" width="850">
-</p>
 
 ## features
 - hyprland
