@@ -1,6 +1,6 @@
 #!/bin/bash
 
-choice=$(printf " shutdown\n reboot\n󰍃 log out\n󰌾 lock\n󰤄 suspend" | fuzzel --dmenu)
+choice=$(printf " shutdown\n reboot\n󰍃 log out\n󰌾 lock\n󰤄 suspend" | rofi -i -p ">" -dmenu)
 choice=$(echo "$choice" | sed 's/^[^ ]* //')
 
 # trim whitespace/newlines

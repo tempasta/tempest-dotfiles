@@ -1,0 +1,97 @@
+configuration {
+    font:            "JetBrainsMono Nerd Font 12";
+    me-select-entry: "";
+    me-accept-entry: [ MousePrimary, MouseSecondary, MouseDPrimary ];
+    show-icons:      true;
+    display-drun:    ">";
+    display-run:     ">";
+    display-window:  ">";
+}
+
+* {
+    background-color:   transparent;
+    text-color:         #c2c2c6ff;
+    border-color:       #535668ff;
+    highlight:          bold #625E6Fff;
+    spacing:            0;
+}
+
+window {
+    width:              600px;
+    border:             2px;
+    border-radius:      0px;
+    border-color:       #535668ff;
+    background-color:   #00000066;
+    padding:            10px 20px;
+}
+
+mainbox {
+    background-color:   transparent;
+    padding:            0;
+    children:           [ inputbar, listview ];
+}
+
+inputbar {
+    background-color:   transparent;
+    border:             0px;
+    padding:            6px 0px;
+    children:           [ prompt, entry ];
+}
+
+separator {
+    height:             0px;
+    border:             0px;
+    background-color:   transparent;
+}
+
+prompt {
+    text-color:         #535668ff;
+    background-color:   transparent;
+    padding:            0 6px 0 0;
+}
+
+entry {
+    text-color:         #535668ff;
+    background-color:   transparent;
+    placeholder:        "";
+}
+
+listview {
+    background-color:   transparent;
+    lines:              10;
+    scrollbar:          false;
+    padding:            4px 0px 0px;
+    border:             0px;
+}
+
+element {
+    background-color:   transparent;
+    text-color:         #c2c2c6ff;
+    padding:            4px 2px;
+    border-radius:      0px;
+    children:           [ element-icon, element-text ];
+}
+
+element normal.normal   { background-color: transparent; text-color: #c2c2c6ff; }
+element normal.urgent   { background-color: transparent; text-color: #c2c2c6ff; }
+element normal.active   { background-color: transparent; text-color: #c2c2c6ff; }
+element alternate.normal { background-color: transparent; text-color: #c2c2c6ff; }
+element alternate.urgent { background-color: transparent; text-color: #c2c2c6ff; }
+element alternate.active { background-color: transparent; text-color: #c2c2c6ff; }
+element selected.normal { background-color: #53566826; text-color: #625E6Fff; }
+element selected.urgent { background-color: #53566826; text-color: #625E6Fff; }
+element selected.active { background-color: #53566826; text-color: #625E6Fff; }
+
+element-icon {
+    background-color:   transparent;
+    size:               1.2em;
+    padding:            0 8px 0 0;
+    vertical-align:     0.5;
+}
+
+element-text {
+    background-color:   transparent;
+    text-color:         inherit;
+    highlight:          bold #625E6Fff;
+    vertical-align:     0.5;
+}

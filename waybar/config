@@ -29,7 +29,7 @@
   "custom/power": {
     "format": "[  ]",
     "tooltip": false,
-    "on-click": "~/.config/waybar/scripts/power.sh"
+    "on-click": "wlogout"
   },
 
   "custom/clock": {

@@ -27,11 +27,11 @@ get_monitors() {
     printf '%s\n' "${mons[@]}"
 }
 
-# ---------------- fuzzel picker ----------------
+# ---------------- rofi picker ----------------
 FILE=$(find "$WALLPAPER_DIR" -type f \
     | sort \
     | sed "s|$WALLPAPER_DIR/||" \
-    | fuzzel --dmenu --prompt="> ")
+    | rofi -dmenu -i -p ">")
 
 [ -z "$FILE" ] && exit 0
 
@@ -175,7 +175,7 @@ button:hover {
 }
 
 #workspaces button.active {
-    color: ${color11};
+    color: ${color3};
 }
 
 #pulseaudio {
@@ -206,29 +206,154 @@ EOF
 
 pkill -USR1 kitty 2>/dev/null
 
-# ---------------- fuzzel theme ----------------
-mkdir -p ~/.config/fuzzel
+# ---------------- rofi theme ----------------
+mkdir -p ~/.config/rofi
 
-cat > ~/.config/fuzzel/fuzzel.ini <<EOF
-[main]
-width=60
-horizontal-pad=20
-vertical-pad=10
+# Strip '#' from pywal colors so we can append alpha inline
+c7="${color7#\#}"
+c8="${color8#\#}"
+c4="${color4#\#}"
+c1="${color1#\#}"
+c2="${color2#\#}"
 
-[colors]
-background=00000066
-text=${color7}ff
-prompt=${color8}ff
-input=${color4}ff
-selection=${color1}26
-selection-text=${color2}ff
-border=${color1}ff
-match=${color2}ff
-selection-match=${color2}ff
+cat > ~/.config/rofi/config.rasi <<EOF
+configuration {
+    font:            "JetBrainsMono Nerd Font 12";
+    me-select-entry: "";
+    me-accept-entry: [ MousePrimary, MouseSecondary, MouseDPrimary ];
+    show-icons:      true;
+    display-drun:    ">";
+    display-run:     ">";
+    display-window:  ">";
+}
 
-[border]
-width=2
-radius=0
+* {
+    background-color:   transparent;
+    text-color:         #${c7}ff;
+    border-color:       #${c1}ff;
+    highlight:          bold #${c2}ff;
+    spacing:            0;
+}
+
+window {
+    width:              600px;
+    border:             2px;
+    border-radius:      0px;
+    border-color:       #${c1}ff;
+    background-color:   #00000066;
+    padding:            10px 20px;
+}
+
+mainbox {
+    background-color:   transparent;
+    padding:            0;
+    children:           [ inputbar, listview ];
+}
+
+inputbar {
+    background-color:   transparent;
+    border:             0px;
+    padding:            6px 0px;
+    children:           [ prompt, entry ];
+}
+
+separator {
+    height:             0px;
+    border:             0px;
+    background-color:   transparent;
+}
+
+prompt {
+    text-color:         #${c1}ff;
+    background-color:   transparent;
+    padding:            0 6px 0 0;
+}
+
+entry {
+    text-color:         #${c1}ff;
+    background-color:   transparent;
+    placeholder:        "";
+}
+
+listview {
+    background-color:   transparent;
+    lines:              10;
+    scrollbar:          false;
+    padding:            4px 0px 0px;
+    border:             0px;
+}
+
+element {
+    background-color:   transparent;
+    text-color:         #${c7}ff;
+    padding:            4px 2px;
+    border-radius:      0px;
+    children:           [ element-icon, element-text ];
+}
+
+element normal.normal   { background-color: transparent; text-color: #${c7}ff; }
+element normal.urgent   { background-color: transparent; text-color: #${c7}ff; }
+element normal.active   { background-color: transparent; text-color: #${c7}ff; }
+element alternate.normal { background-color: transparent; text-color: #${c7}ff; }
+element alternate.urgent { background-color: transparent; text-color: #${c7}ff; }
+element alternate.active { background-color: transparent; text-color: #${c7}ff; }
+element selected.normal { background-color: #${c1}26; text-color: #${c2}ff; }
+element selected.urgent { background-color: #${c1}26; text-color: #${c2}ff; }
+element selected.active { background-color: #${c1}26; text-color: #${c2}ff; }
+
+element-icon {
+    background-color:   transparent;
+    size:               1.2em;
+    padding:            0 8px 0 0;
+    vertical-align:     0.5;
+}
+
+element-text {
+    background-color:   transparent;
+    text-color:         inherit;
+    highlight:          bold #${c2}ff;
+    vertical-align:     0.5;
+}
+EOF
+
+# ---------------- wlogout ----------------
+mkdir -p ~/.config/wlogout
+
+cat > ~/.config/wlogout/style.css <<EOF
+* {
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    border-radius: 0;
+    box-shadow: none;
+    text-shadow: none;
+    background-image: none;
+}
+
+window {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+button {
+    color:               #${c7};
+    background-color:    ${WAYBAR_BG};
+    border:              2px solid #${c1};
+    margin:              10px;
+    font-size:           14px;
+    transition:          background-color 0.15s ease, color 0.15s ease;
+    background-repeat:   no-repeat;
+    background-position: center;
+    background-size:     25%;
+}
+
+button:hover, button:active {
+    background-color:   rgba(${r0}, ${g0}, ${b0}, 0.8);
+}
+
+#lock      { background-image: url("$HOME/.config/wlogout/icons/lock_white.png"); }
+#logout    { background-image: url("$HOME/.config/wlogout/icons/logout_white.png"); }
+#suspend   { background-image: url("$HOME/.config/wlogout/icons/suspend_white.png"); }
+#hibernate { background-image: url("$HOME/.config/wlogout/icons/hibernate_white.png"); }
+#shutdown  { background-image: url("$HOME/.config/wlogout/icons/shutdown_white.png"); }
+#reboot    { background-image: url("$HOME/.config/wlogout/icons/reboot_white.png"); }
 EOF
 
 # ---------------- hyprlock ----------------

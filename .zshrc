@@ -28,4 +28,4 @@ alias ll='ls -la'
 alias lt='ls --tree'
 
 
-PROMPT='[%~] [$USER] %# '
+PROMPT='[%~] [$USER] ># '
