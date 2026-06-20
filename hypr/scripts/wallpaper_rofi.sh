@@ -130,7 +130,7 @@ g0=$((16#${hex0:2:2}))
 b0=$((16#${hex0:4:2}))
 
 WAYBAR_BG="rgba($r0, $g0, $b0, 0.6)"
-
+GTK_BG="rgba($r0, $g0, $b0, 0.6)"
 # ---------------- waybar ----------------
 cat > ~/.config/waybar/theme.css <<EOF
 * {
@@ -514,6 +514,77 @@ END {
 && mv ~/.config/cava/config.tmp ~/.config/cava/config
 
 pkill -USR1 cava 2>/dev/null
+
+# ---------------- gtk ----------------
+mkdir -p ~/.config/gtk-3.0
+
+cat > ~/.config/gtk-3.0/gtk.css <<EOF
+@import 'colors.css';
+
+.thunar {
+    font-family: JetBrainsMono Nerd Font;
+    font-size: 10pt;
+}
+
+window.thunar,
+window.thunar decoration,
+window.thunar headerbar,
+window.thunar toolbar,
+window.thunar .toolbar,
+window.thunar paned,
+window.thunar box,
+window.thunar scrolledwindow {
+    background-color: transparent;
+    background-image: none;
+}
+
+window.thunar .path-bar,
+window.thunar .location-bar,
+window.thunar .locationentry,
+window.thunar .entry {
+    background-color: transparent;
+    background-image: none;
+    border: none;
+}
+
+window.thunar .path-bar box {
+    background-color: transparent;
+}
+
+window.thunar treeview,
+window.thunar treeview.view,
+window.thunar .view {
+    background-color: transparent;
+    background-image: none;
+    border: none;
+}
+
+window.thunar treeview header,
+window.thunar treeview header button {
+    background-color: transparent;
+    background-image: none;
+    border: none;
+}
+
+window.thunar treeview row {
+    background-color: transparent;
+    border: none;
+}
+
+window.thunar .column-view,
+window.thunar .standard-view {
+    background-color: transparent;
+}
+
+window.thunar * {
+    background-image: none;
+    border: none;
+}
+
+window.thunar {
+    background-color: ${GTK_BG};
+}
+EOF
 
 # ---------------- restart ----------------
 hyprctl reload

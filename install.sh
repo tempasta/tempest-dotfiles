@@ -149,7 +149,7 @@ sync_config() {
 
 mkdir -p "$CONFIG_DIR"
 
-for cfg in hypr waybar fuzzel kitty swaync fastfetch equibop wal cava; do
+for cfg in hypr waybar fuzzel rofi wlogout kitty swaync fastfetch equibop wal cava; do
     sync_config "$cfg"
 done
 
@@ -662,10 +662,10 @@ section "wallpaper"
 printf "  ${DIM}pick a wallpaper to seed your color theme.\n"
 printf "  you can change this any time with ${RESET}${BOLD}super + w${RESET}${DIM} in hyprland.${RESET}\n\n"
 
-if [ -f "$CONFIG_DIR/hypr/scripts/wallpaper_fuzzel.sh" ]; then
-    bash "$CONFIG_DIR/hypr/scripts/wallpaper_fuzzel.sh" || true
+if [ -f "$CONFIG_DIR/hypr/scripts/wallpaper_rofi.sh" ]; then
+    bash "$CONFIG_DIR/hypr/scripts/wallpaper_rofi.sh" || true
 else
-    log warn "wallpaper_fuzzel.sh not found, skipping picker"
+    log warn "wallpaper_rofi.sh not found, skipping picker"
 fi
 
 pkill hyprpaper || true
