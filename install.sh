@@ -75,7 +75,8 @@ PACKAGES=(
     hyprpaper
     hyprlock
     waybar
-    fuzzel
+    rofi
+    wlogout
     kitty
     swaync
     fastfetch
